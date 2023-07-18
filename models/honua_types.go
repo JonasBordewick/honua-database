@@ -1,0 +1,68 @@
+package models
+
+import "time"
+
+type Identity struct {
+	Id   string
+	Name string
+}
+
+type Entity struct {
+	Id              int
+	IdentityId      string
+	EntityId        string
+	Name            string
+	IsDevice        bool
+	AllowRules      bool
+	HasAttribute    bool
+	Attribute       string
+	IsVictronSensor bool
+	HasNumericState bool
+}
+
+type State struct {
+	Id         int
+	EntityId   int
+	State      string
+	RecordTime *time.Time
+}
+
+type Rule struct {
+	Id              int
+	Enabled         bool
+	TriggerType     int
+	PeriodicTrigger int
+	Name            string
+	Target          Entity
+	Condition       *Condition
+	ThenActions     *[]Action
+	ElseActions     *[]Action
+}
+
+type Condition struct {
+	Id              int
+	Type            int
+	Sensor          Entity
+	ComparisonState string
+	After           string
+	Before          string
+	Above           *ConditionValue
+	Below           *ConditionValue
+	SubCondition    *[]Condition
+}
+
+type ConditionValue struct {
+	Valid bool
+	Value int
+}
+
+type Action struct {
+	Id      int
+	Service string
+}
+
+type Service struct {
+	Domain      string
+	Name        string
+	Description string
+}

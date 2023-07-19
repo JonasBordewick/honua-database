@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/JonasBordewick/honua-database.git/models"
+	"github.com/JonasBordewick/honua-database/models"
 )
 
 func (hdb *HonuaDatabase) AddState(state *models.State) error {

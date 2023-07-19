@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"log"
 
-	"github.com/JonasBordewick/honua-database.git/models"
+	"github.com/JonasBordewick/honua-database/models"
 )
 
 func (hdb *HonuaDatabase) AddIdentity(identity *models.Identity) error {

@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	honuadatabase "github.com/JonasBordewick/honua-database.git"
+	honuadatabase "github.com/JonasBordewick/honua-database"
 )
 
 func main() {

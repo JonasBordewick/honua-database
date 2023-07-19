@@ -1,4 +1,4 @@
-module github.com/JonasBordewick/honua-database.git
+module github.com/JonasBordewick/honua-database
 
 go 1.20
 

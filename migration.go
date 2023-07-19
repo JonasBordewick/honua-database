@@ -105,6 +105,10 @@ func (hdb *HonuaDatabase) Migrate() {
 	// Iterate through the todo list and parse the migrations to string statements. And Execute each statement
 	// After that write the migration to the metadata table
 	for _, migration := range todo {
+		if strings.Contains(migration, "create.sql") {
+			log.Printf("Migrate Database skip file %s\n", migration)
+			continue
+		}
 		log.Printf("Migrate Database with file %s\n", migration)
 		stmts, err := read_and_parse_sql_file(migration)
 		if err != nil {

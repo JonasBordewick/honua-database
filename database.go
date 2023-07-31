@@ -17,6 +17,8 @@ type HonuaDatabase struct {
 
 var instance *HonuaDatabase
 
+// Gibt die aktuelle Datenbank Instanz zurück
+// Falls noch keine existiert, dann wird eine neue erstellt, dafür muss man die Parameter übergeben
 func GetHonuaDatabaseInstance(user, password, host, port, dbname, pathToFiles string) *HonuaDatabase {
 	if instance == nil {
 		var connStr = fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable", user, password, host, port, dbname)
@@ -42,6 +44,11 @@ func GetHonuaDatabaseInstance(user, password, host, port, dbname, pathToFiles st
 	return instance
 }
 
+// Führt im Ordner der Instanz die create.sql file aus
+// Dazu wird die File eingelesen und in Statements unterteilt.
+// Jedes Statement wird dann ausgeführt. Dadurch, dass die Create Table Statements
+// mit einem IF NOT EXIST verbunden sind sollte es keine Fehler geben, wenn diese
+// Methode öfter ausgeführt wird.
 func (hdb *HonuaDatabase) CreateTables() error {
 	stmts, err := read_and_parse_sql_file(fmt.Sprintf("%s/create.sql", hdb.pathToFiles))
 	if err != nil {

@@ -83,7 +83,7 @@ func (hdb *HonuaDatabase) write_metadata(migration string) {
 	}
 }
 
-// public Method to start hte Migration
+// public Method to start the Migration
 func (hdb *HonuaDatabase) Migrate() {
 	hdb.mutex.Lock()
 	defer hdb.mutex.Unlock()

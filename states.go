@@ -27,7 +27,6 @@ func (hdb *HonuaDatabase) GetState(entityID int) (*models.State, error) {
 
 	rows, err := hdb.db.Query(query, entityID)
 	if err != nil {
-		rows.Close()
 		log.Printf("An error occured during getting the latest state of entity with id = %d: %s\n", entityID, err.Error())
 		return nil, err
 	}
@@ -67,7 +66,6 @@ func (hdb *HonuaDatabase) GetNumberOfStatesOfEntity(entityID int) (int, error) {
 
 	rows, err := hdb.db.Query(query, entityID)
 	if err != nil {
-		rows.Close()
 		log.Printf("An error occured during getting the number of states of entity with id = %d: %s\n", entityID, err.Error())
 		return -1, err
 	}

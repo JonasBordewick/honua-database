@@ -8,6 +8,7 @@ import (
 	"github.com/JonasBordewick/honua-database/models"
 )
 
+// Fügt eine neue Entität zur Datenbank hinzu
 func (hdb *HonuaDatabase) AddEntity(entity *models.Entity) error {
 	const query = `
 INSERT INTO entities(
@@ -33,6 +34,7 @@ INSERT INTO entities(
 	return err
 }
 
+// Löscht eine Enität mit der ID im Parameter
 func (hdb *HonuaDatabase) DeleteEntity(id int) error {
 	const query = "DELETE FROM entities WHERE id = $1;"
 
@@ -45,6 +47,7 @@ func (hdb *HonuaDatabase) DeleteEntity(id int) error {
 	return err
 }
 
+// Checkt, ob eine Entität existiert die einen bestimmten Identifier und eine EntityID hat
 func (hdb *HonuaDatabase) ExistEntity(identifier, entityId string) (bool, error) {
 	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM entities WHERE identity = $1 AND entity_id = $2) THEN true ELSE false END"
 

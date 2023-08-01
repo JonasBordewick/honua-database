@@ -47,6 +47,30 @@ func (hdb *HonuaDatabase) DeleteEntity(id int) error {
 	return err
 }
 
+func (hdb *HonuaDatabase) EditEntity(identifier string, entity *models.Entity) error {
+	const query = `
+UPDATE entities
+SET name = $1, is_device = $2, allow_rules = $3, has_attribute = $4, attribute = $5, is_victron_sensor = $6, has_numeric_state = $7
+WHERE identity = $8 AND entity_id = $9;
+	`
+	hdb.mutex.Lock()
+	defer hdb.mutex.Unlock()
+
+	var attributeString sql.NullString = sql.NullString{
+		Valid:  entity.Attribute != "",
+		String: entity.Attribute,
+	}
+
+	entity.HasAttribute = attributeString.Valid
+
+	_, err := hdb.db.Exec(query, entity.Name, entity.IsDevice, entity.AllowRules, entity.HasAttribute, attributeString, entity.IsVictronSensor, entity.HasNumericState, entity.IdentityId, entity.EntityId)
+
+	if err != nil {
+		log.Printf("An error occured during editity entitiy: %s\n", err.Error())
+	}
+	return err
+}
+
 // Checkt, ob eine Entität existiert die einen bestimmten Identifier und eine EntityID hat
 func (hdb *HonuaDatabase) ExistEntity(identifier, entityId string) (bool, error) {
 	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM entities WHERE identity = $1 AND entity_id = $2) THEN true ELSE false END"

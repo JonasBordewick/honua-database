@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type Identity struct {
 	Id   string
@@ -18,6 +20,10 @@ type Entity struct {
 	Attribute       string
 	IsVictronSensor bool
 	HasNumericState bool
+}
+
+func (e *Entity) Equals(o *Entity) bool {
+	return (e.IdentityId == o.IdentityId) && (e.EntityId == o.EntityId) && (e.Name == o.Name) && (e.IsDevice == o.IsDevice) && (e.AllowRules == o.AllowRules) && (e.HasAttribute == o.HasAttribute) && (e.Attribute == o.Attribute) && (e.IsVictronSensor == o.IsVictronSensor) && (e.HasNumericState == o.HasNumericState)
 }
 
 type State struct {

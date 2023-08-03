@@ -34,15 +34,15 @@ type State struct {
 }
 
 type Rule struct {
-	Id              int
-	Enabled         bool
-	TriggerType     int
-	PeriodicTrigger int
-	Name            string
-	Target          Entity
-	Condition       *Condition
-	ThenActions     *[]Action
-	ElseActions     *[]Action
+	Id                   int
+	Enabled              bool
+	EventBasedEvaluation bool
+	PeriodicTrigger      int
+	Name                 string
+	Target               Entity
+	Condition            *Condition
+	ThenActions          *[]Action
+	ElseActions          *[]Action
 }
 
 type Condition struct {
@@ -54,7 +54,7 @@ type Condition struct {
 	Before          string
 	Above           *ConditionValue
 	Below           *ConditionValue
-	SubCondition    *[]Condition
+	SubConditions   *[]Condition
 }
 
 type ConditionValue struct {

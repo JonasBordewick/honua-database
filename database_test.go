@@ -1,7 +1,10 @@
 package honuadatabase
 
 import (
+	"fmt"
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/JonasBordewick/honua-database/models"
 )
@@ -177,7 +180,7 @@ func TestAddState(t *testing.T) {
 	}
 }
 
-func TestGetState (t *testing.T) {
+func TestGetState(t *testing.T) {
 	id, err := test_instance.GetIdOfEntity("testidentifier", "test.test")
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
@@ -191,7 +194,7 @@ func TestGetState (t *testing.T) {
 	}
 }
 
-func TestGetNumbersOfStates (t *testing.T) {
+func TestGetNumbersOfStates(t *testing.T) {
 	id, err := test_instance.GetIdOfEntity("testidentifier", "test.test")
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
@@ -205,8 +208,7 @@ func TestGetNumbersOfStates (t *testing.T) {
 	}
 }
 
-
-func TestDeleteOldestState (t *testing.T) {
+func TestDeleteOldestState(t *testing.T) {
 	id, err := test_instance.GetIdOfEntity("testidentifier", "test.test")
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
@@ -221,9 +223,181 @@ func TestDeleteOldestState (t *testing.T) {
 	}
 }
 
+func TestHassService(t *testing.T) {
+
+	var identifier = randSeq(10)
+	var domain = fmt.Sprintf("%s.domain", identifier)
+
+	// setup
+	t.Run("Create Identity", func(t *testing.T) {
+		err := test_instance.AddIdentity(&models.Identity{Id: identifier, Name: "Zufällige Identität"})
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		exists, err := test_instance.ExistIdentity(identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		if !exists {
+			t.Error("Identity does not exist, should exist")
+		}
+	})
+
+	t.Run("Exist Hass Service Before Adding a Hass Service", func(t *testing.T) {
+		exist, err := test_instance.ExistsHassService(identifier, domain)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		if exist {
+			t.Error("FAILED: expected that HassService does not exists")
+		}
+	})
+
+	t.Run("Add hass Service", func(t *testing.T) {
+		err := test_instance.AddHassService(&models.HassService{Domain: domain, Name: "Zufällige Domain", Enabled: true}, identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+	})
+
+	t.Run("Exist Hass Service After Adding", func(t *testing.T) {
+		exist, err := test_instance.ExistsHassService(identifier, domain)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		if !exist {
+			t.Error("FAILED: expected that HassService exists but it does not exist")
+		}
+	})
+
+	t.Run("GetID", func(t *testing.T) {
+		_, err := test_instance.GetIDofHassService(identifier, domain)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+	})
+
+	t.Run("ToggleService", func(t *testing.T) {
+		err := test_instance.ToggleHassService(identifier, domain)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+	})
+
+	t.Run("DeleteService", func(t *testing.T) {
+		err := test_instance.DeleteHassService(identifier, domain)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+	})
+
+	// Clean
+	err := test_instance.DeleteIdentity(identifier)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+}
+
+func TestAllowService(t *testing.T) {
+	var identifier = randSeq(10)
+	var domain = fmt.Sprintf("%s.domain", identifier)
+	var entity = &models.Entity{
+		IdentityId: identifier,
+		EntityId: "test.entity",
+		Name: "Test Entity",
+		IsDevice: true,
+		AllowRules: true,
+		HasAttribute: false,
+		Attribute: "",
+		IsVictronSensor: false,
+		HasNumericState: false,
+	}
+
+	// setup
+	t.Run("Create Identity", func(t *testing.T) {
+		err := test_instance.AddIdentity(&models.Identity{Id: identifier, Name: "Zufällige Identität"})
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		exists, err := test_instance.ExistIdentity(identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		if !exists {
+			t.Error("Identity does not exist, should exist")
+		}
+	})
+
+	t.Run("Create Entity", func(t *testing.T) {
+		err := test_instance.AddEntity(entity)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		exists, err := test_instance.ExistEntity(identifier, entity.EntityId)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		if !exists {
+			t.Error("Entity does not exist, should exist")
+		}
+	})
+
+	t.Run("Create HassService", func(t *testing.T) {
+		err := test_instance.AddHassService(&models.HassService{
+			Domain: domain,
+			Name: "Zufälliger Service",
+		}, identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		exists, err := test_instance.ExistsHassService(identifier, domain)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		if !exists {
+			t.Error("Hass Serivce does not exist, should exist")
+		}
+	})
+
+	err := test_instance.AllowService(identifier, domain, entity.EntityId)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+	allowed, err := test_instance.IsServiceAllowed(identifier, domain, entity.EntityId)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+	if !allowed {
+		t.Errorf("Hass Serivce %s is not allowed for %s in %s", domain, entity.EntityId, identifier)
+	}
+	err = test_instance.DisallowService(identifier, domain, entity.EntityId)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+	
+
+	t.Run("Clean", func(t *testing.T) {
+		err := test_instance.DeleteIdentity(identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+	})
+}
+
 func TestClean(t *testing.T) {
 	err := test_instance.DeleteIdentity("testidentifier")
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
 	}
+}
+
+var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func randSeq(n int) string {
+	rand.NewSource(time.Now().UnixNano())
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }

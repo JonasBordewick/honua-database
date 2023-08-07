@@ -47,15 +47,27 @@ type Rule struct {
 
 type Condition struct {
 	Id              int
-	Type            int
-	Sensor          Entity
+	Type            ConditionType
+	Sensor          *Entity
 	ComparisonState string
 	After           string
 	Before          string
 	Above           *ConditionValue
 	Below           *ConditionValue
-	SubConditions   *[]Condition
+	SubConditions   []*Condition
 }
+
+type ConditionType int
+
+const (
+	AND ConditionType = iota
+	OR
+	NAND
+	NOR
+	NUMERICSTATE
+	STATE
+	TIME
+)
 
 type ConditionValue struct {
 	Valid bool

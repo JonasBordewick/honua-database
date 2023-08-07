@@ -8,6 +8,34 @@ import (
 	"github.com/JonasBordewick/honua-database/models"
 )
 
+func (hdb *HonuaDatabase) GetEntity(id int) (*models.Entity, error) {
+	const query = "SELECT * FROM entities WHERE id=$1;"
+	hdb.mutex.Lock()
+	defer hdb.mutex.Unlock()
+
+	rows, err := hdb.db.Query(query, id)
+	if err != nil {
+		log.Printf("An error occured during getting entity: %s\n", err.Error())
+		return nil, err
+	}
+
+	var result *models.Entity
+
+	for rows.Next() {
+		entity, err := hdb.make_entity(rows)
+		if err != nil {
+			rows.Close()
+			log.Printf("An error occured during getting entity: %s\n", err.Error())
+			return nil, err
+		}
+		result = entity
+	}
+
+	rows.Close()
+
+	return result, nil
+}
+
 // Fügt eine neue Entität zur Datenbank hinzu
 func (hdb *HonuaDatabase) AddEntity(entity *models.Entity) error {
 	const query = `

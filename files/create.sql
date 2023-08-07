@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS allowed_sensors (
 CREATE TABLE IF NOT EXISTS conditions (
     id SERIAL PRIMARY KEY,
     type INTEGER NOT NULL,
-    sensor_id INTEGER NOT NULL,
+    sensor_id INTEGER,
     CONSTRAINT fk_sensor_id FOREIGN KEY(sensor_id) REFERENCES entities(id) ON DELETE CASCADE,
     before TEXT,
     after TEXT,

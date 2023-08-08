@@ -10,8 +10,6 @@ import (
 
 func (hdb *HonuaDatabase) AddState(identity string, state *models.State) error {
 	const query = "INSERT INTO states (entity_id, identity, state) VALUES ($1, $2, $3);"
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 	_, err := hdb.db.Exec(query, state.EntityId, identity, state.State)
 	if err != nil {
 		log.Printf("An error occured during adding a new state to table states: %s\n", err.Error())
@@ -22,8 +20,6 @@ func (hdb *HonuaDatabase) AddState(identity string, state *models.State) error {
 func (hdb *HonuaDatabase) GetState(entityID int) (*models.State, error) {
 	const query = "SELECT * FROM states WHERE id = (SELECT MAX(id) FROM states WHERE entity_id = $1);"
 
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	rows, err := hdb.db.Query(query, entityID)
 	if err != nil {
@@ -49,8 +45,6 @@ func (hdb *HonuaDatabase) GetState(entityID int) (*models.State, error) {
 
 func (hdb *HonuaDatabase) DeleteOldestState(entityID int) error {
 	const query = "DELETE FROM states WHERE id = (SELECT MIN(id) FROM states WHERE entity_id = $1);"
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 	_, err := hdb.db.Exec(query, entityID)
 	if err != nil {
 		log.Printf("An error occured during deleting the oldest state of enitity with id = %d: %s\n", entityID, err.Error())
@@ -60,9 +54,6 @@ func (hdb *HonuaDatabase) DeleteOldestState(entityID int) error {
 
 func (hdb *HonuaDatabase) GetNumberOfStatesOfEntity(entityID int) (int, error) {
 	const query = "SELECT COUNT(*) AS count FROM states WHERE entity_id = $1;"
-
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	rows, err := hdb.db.Query(query, entityID)
 	if err != nil {

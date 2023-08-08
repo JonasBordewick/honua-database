@@ -9,8 +9,6 @@ import (
 
 func (hdb *HonuaDatabase) AddIdentity(identity *models.Identity) error {
 	const query = "INSERT INTO identities(identifier, name) VALUES($1, $2);"
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 	_, err := hdb.db.Exec(query, identity.Id, identity.Name)
 	if err != nil {
 		log.Printf("An error occured during adding a new identity(identifier=%s, name=%s) to identities: %s\n", identity.Id, identity.Name, err.Error())
@@ -20,8 +18,6 @@ func (hdb *HonuaDatabase) AddIdentity(identity *models.Identity) error {
 
 func (hdb *HonuaDatabase) DeleteIdentity(identifier string) error {
 	const query = "DELETE FROM identities WHERE identifier = $1"
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 	_, err := hdb.db.Exec(query, identifier)
 	if err != nil {
 		log.Printf("An error occured during deleting the identity %s: %s\n", identifier, err.Error())
@@ -31,8 +27,6 @@ func (hdb *HonuaDatabase) DeleteIdentity(identifier string) error {
 
 func (hdb *HonuaDatabase) ExistIdentity(identifier string) (bool, error) {
 	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM identities WHERE identifier = $1) THEN true ELSE false END;"
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 	rows, err := hdb.db.Query(query, identifier)
 	if err != nil {
 		log.Printf("An error occured during checking if the identity with id %s exists: %s\n", identifier, err.Error())
@@ -57,8 +51,6 @@ func (hdb *HonuaDatabase) ExistIdentity(identifier string) (bool, error) {
 
 func (hdb *HonuaDatabase) GetIdentity(identifier string) (*models.Identity, error) {
 	const query = "SELECT * FROM identities WHERE identifier = $1;"
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	rows, err := hdb.db.Query(query, identifier)
 	if err != nil {
@@ -83,8 +75,6 @@ func (hdb *HonuaDatabase) GetIdentity(identifier string) (*models.Identity, erro
 
 func (hdb *HonuaDatabase) GetIdentities() ([]*models.Identity, error) {
 	const query = "SELECT * FROM identities"
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	rows, err := hdb.db.Query(query)
 	if err != nil {

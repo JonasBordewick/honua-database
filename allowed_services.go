@@ -33,8 +33,6 @@ func (hdb *HonuaDatabase) AllowService(identity, domain, entityId string) error 
 	}
 
 	const query = "INSERT INTO allowed_services(identity, entity_id, service_id) VALUES ($1, $2, $3)"
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	_, err = hdb.db.Exec(query, identity, eId, sId)
 
@@ -65,8 +63,6 @@ func (hdb *HonuaDatabase) DisallowService(identity, domain, entityId string) err
 	}
 	
 	const query = "DELETE FROM allowed_services WHERE identity=$1 AND entity_id=$2 AND service_id=$3;"
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	_, err = hdb.db.Exec(query, identity, eId, sId)
 
@@ -104,9 +100,6 @@ func (hdb *HonuaDatabase) IsServiceAllowed(identity, domain, entityId string) (b
 	}
 
 	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM allowed_services WHERE identity = $1 aND entity_id = $2 AND service_id = $3) THEN true ELSE false END"
-
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	rows, err := hdb.db.Query(query, identity, eId, sId)
 	if err != nil {

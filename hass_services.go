@@ -72,8 +72,6 @@ INSERT INTO hass_services(
 ) VALUES ($1, $2, $3, $4);
 `
 
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	id, err := hdb.get_entity_id(identity)
 	if err != nil {
@@ -91,9 +89,6 @@ INSERT INTO hass_services(
 
 func (hdb *HonuaDatabase) GetIDofHassService(identity, domain string) (int, error) {
 	const query = "SELECT id FROM hass_services WHERE identity=$1 AND domain=$2;"
-
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	rows, err := hdb.db.Query(query, identity, domain)
 	if err != nil {
@@ -124,8 +119,6 @@ func (hdb *HonuaDatabase) GetIDofHassService(identity, domain string) (int, erro
 func (hdb *HonuaDatabase) ToggleHassService(identity, domain string) error {
 	const query = "UPDATE hass_services SET enabled = NOT enabled WHERE identity=$1 AND domain=$2;"
 
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 	_, err := hdb.db.Exec(query, identity, domain)
 	if err != nil {
 		log.Printf("An error occured during changing the enabled state to the opposite from homeassistant service of identity %s with domain = %s: %s\n", identity, domain, err.Error())
@@ -135,8 +128,6 @@ func (hdb *HonuaDatabase) ToggleHassService(identity, domain string) error {
 
 func (hdb *HonuaDatabase) DeleteHassService(identity, domain string) error {
 	const query = "DELETE FROM hass_services WHERE identity=$1 AND domain=$2;"
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 	_, err := hdb.db.Exec(query, identity, domain)
 	if err != nil {
 		log.Printf("An error occured during deleting the homeassistant service of identity %s with domain = %s: %s\n", identity, domain, err.Error())
@@ -146,8 +137,6 @@ func (hdb *HonuaDatabase) DeleteHassService(identity, domain string) error {
 
 func (hdb *HonuaDatabase) ExistsHassService(identity, domain string) (bool, error) {
 	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM hass_services WHERE identity = $1 AND domain = $2) THEN true ELSE false END"
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	rows, err := hdb.db.Query(query, identity, domain)
 	if err != nil {
@@ -177,9 +166,6 @@ func (hdb *HonuaDatabase) GetAllowedHassServicesOfEntity(identity, entityId stri
 	FROM hass_services as services, allowed_services as a 
 	WHERE services.id = a.service_id AND a.entity_id = (SELECT id FROM entities WHERE identity=$1 AND entity_id=$2);
 	`
-
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	rows, err := hdb.db.Query(query, identity, entityId)
 	if err != nil {

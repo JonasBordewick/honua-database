@@ -4,14 +4,13 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"sync"
 
 	_ "github.com/lib/pq"
 )
 
 type HonuaDatabase struct {
-	db          *sql.DB
-	mutex       sync.Mutex
+	db *sql.DB
+	//mutex       sync.Mutex
 	pathToFiles string
 }
 
@@ -31,8 +30,8 @@ func GetHonuaDatabaseInstance(user, password, host, port, dbname, pathToFiles st
 		}
 		log.Println("The Database connection is established")
 		instance = &HonuaDatabase{
-			db:          db,
-			mutex:       sync.Mutex{},
+			db: db,
+			//mutex:       sync.Mutex{},
 			pathToFiles: pathToFiles,
 		}
 		err = instance.CreateTables()

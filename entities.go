@@ -66,8 +66,6 @@ func (hdb *HonuaDatabase) get_entity_id(identifier string) (int, error) {
 
 func (hdb *HonuaDatabase) GetEntity(id int) (*models.Entity, error) {
 	const query = "SELECT * FROM entities WHERE id=$1;"
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	rows, err := hdb.db.Query(query, id)
 	if err != nil {
@@ -101,10 +99,6 @@ INSERT INTO entities(
 	attribute, is_victron_sensor, has_numeric_state
 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
 `
-
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
-
 	var attributeString sql.NullString = sql.NullString{
 		Valid:  entity.Attribute != "",
 		String: entity.Attribute,
@@ -130,8 +124,6 @@ INSERT INTO entities(
 func (hdb *HonuaDatabase) DeleteEntity(id int) error {
 	const query = "DELETE FROM entities WHERE id = $1;"
 
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 	_, err := hdb.db.Exec(query, id)
 	if err != nil {
 		log.Printf("An error occured during deleting the entity with id = %d: %s\n", id, err.Error())
@@ -145,8 +137,6 @@ UPDATE entities
 SET name = $1, is_device = $2, allow_rules = $3, has_attribute = $4, attribute = $5, is_victron_sensor = $6, has_numeric_state = $7
 WHERE identity = $8 AND entity_id = $9;
 	`
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	var attributeString sql.NullString = sql.NullString{
 		Valid:  entity.Attribute != "",
@@ -166,9 +156,6 @@ WHERE identity = $8 AND entity_id = $9;
 // Checkt, ob eine Entität existiert die einen bestimmten Identifier und eine EntityID hat
 func (hdb *HonuaDatabase) ExistEntity(identifier, entityId string) (bool, error) {
 	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM entities WHERE identity = $1 AND entity_id = $2) THEN true ELSE false END"
-
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	rows, err := hdb.db.Query(query, identifier, entityId)
 	if err != nil {
@@ -195,8 +182,6 @@ func (hdb *HonuaDatabase) ExistEntity(identifier, entityId string) (bool, error)
 func (hdb *HonuaDatabase) GetIdOfEntity(identifier, entityId string) (int, error) {
 	const query = "SELECT id FROM entities WHERE identity = $1 AND entity_id = $2"
 
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 	rows, err := hdb.db.Query(query, identifier, entityId)
 	if err != nil {
 		log.Printf("An error occured during checking the id of entity (%s, %s): %s\n", identifier, entityId, err.Error())
@@ -222,8 +207,6 @@ func (hdb *HonuaDatabase) GetIdOfEntity(identifier, entityId string) (int, error
 func (hdb *HonuaDatabase) GetEntities(identifier string) ([]*models.Entity, error) {
 	const query = "SELECT * FROM entities WHERE identity = $1;"
 
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	rows, err := hdb.db.Query(query, identifier)
 	if err != nil {
@@ -250,9 +233,6 @@ func (hdb *HonuaDatabase) GetEntities(identifier string) ([]*models.Entity, erro
 
 func (hdb *HonuaDatabase) GetEntitiesWhereRulesAreAllowed(identifier string) ([]*models.Entity, error) {
 	const query = "SELECT * FROM entities WHERE identity = $1 AND allow_rules;"
-
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	rows, err := hdb.db.Query(query, identifier)
 	if err != nil {
@@ -284,9 +264,6 @@ func (hdb *HonuaDatabase) GetEntitiesWithoutAnyRule() ([]*models.Entity, error) 
 
 func (hdb *HonuaDatabase) GetVictronEntities(identifier string) ([]*models.Entity, error) {
 	const query = "SELECT * FROM entities WHERE identity = $1 AND is_victron_sensor;"
-
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	rows, err := hdb.db.Query(query, identifier)
 	if err != nil {

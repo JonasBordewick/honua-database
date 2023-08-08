@@ -33,8 +33,6 @@ func (hdb *HonuaDatabase) AllowSensor(identity, deviceId, sensorId string) error
 	}
 
 	const query = "INSERT INTO allowed_sensors(identity, device_id, sensor_id) VALUES ($1, $2, $3);"
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	_, err = hdb.db.Exec(query, identity, dId, sId)
 
@@ -65,8 +63,6 @@ func (hdb *HonuaDatabase) DisallowSensor(identity, deviceId, sensorId string) er
 	}
 	
 	const query = "DELETE FROM allowed_sensors WHERE identity=$1 AND device_id=$2 AND sensor_id=$3;"
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	_, err = hdb.db.Exec(query, identity, dId, sId)
 
@@ -104,9 +100,6 @@ func (hdb *HonuaDatabase) IsSensorAllowed(identity, deviceId, sensorId string) (
 	}
 
 	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM allowed_sensors WHERE identity=$1 AND device_id = $2 AND sensor_id = $3) THEN true ELSE false END"
-
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	rows, err := hdb.db.Query(query, identity, dId, sId)
 	if err != nil {

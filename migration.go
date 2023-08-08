@@ -16,8 +16,6 @@ const (
 )
 
 func (hdb *HonuaDatabase) exists_metadata(filepath string) (bool, error) {
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 	rows, err := hdb.db.Query(exists_metadata, filepath)
 	if err != nil {
 		log.Printf("An error occured during checking if the metadata %s exists: %s\n", filepath, err.Error())
@@ -85,8 +83,6 @@ func (hdb *HonuaDatabase) write_metadata(migration string) {
 
 // public Method to start the Migration
 func (hdb *HonuaDatabase) Migrate() {
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 	// get all migrations that where done in the past
 	var done []string = hdb.get_all_done_migrations()
 	// get all migrations which are in the folder /app/database/files

@@ -79,8 +79,6 @@ func (hdb *HonuaDatabase) get_condition_id(identifier string) (int, error) {
 }
 
 func (hdb *HonuaDatabase) AddCondition(identity string, condition *models.Condition) (int, error) {
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	id, err := hdb.get_condition_id(identity)
 	if err != nil {
@@ -158,8 +156,6 @@ func (hdb *HonuaDatabase) add_subcondition(identity string, condition *models.Co
 
 func (hdb *HonuaDatabase) ExistCondition(conditionID int, identity string) (bool, error) {
 	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM conditions WHERE identity=$1 AND id = $2) THEN true ELSE false END"
-	hdb.mutex.Lock()
-	defer hdb.mutex.Unlock()
 
 	rows, err := hdb.db.Query(query, identity, conditionID)
 	if err != nil {
@@ -197,14 +193,12 @@ func (hdb *HonuaDatabase) GetCondition(conditionID int, identity string) (*model
 	}
 
 	const query = "SELECT * FROM conditions WHERE identity =$1 AND id=$2;"
-	hdb.mutex.Lock()
 	
 	rows, err := hdb.db.Query(query, identity, conditionID)
 	if err != nil {
 		log.Printf("An error occured during getting the condition with id %d: %s\n", conditionID, err.Error())
 		return nil, err
 	}
-	hdb.mutex.Unlock()
 
 	var result *models.Condition
 
@@ -226,7 +220,6 @@ func (hdb *HonuaDatabase) GetCondition(conditionID int, identity string) (*model
 
 func (hdb *HonuaDatabase) get_subconditions(parentID int) ([]*models.Condition, error) {
 	const query = "SELECT * FROM conditions WHERE parent_id=$1;"
-	hdb.mutex.Lock()
 	
 
 	rows, err := hdb.db.Query(query, parentID)
@@ -234,8 +227,6 @@ func (hdb *HonuaDatabase) get_subconditions(parentID int) ([]*models.Condition, 
 		log.Printf("An error occured during getting all subconditions of condition with id %d: %s\n", parentID, err.Error())
 		return nil, err
 	}
-
-	hdb.mutex.Unlock()
 
 	var result []*models.Condition = []*models.Condition{}
 

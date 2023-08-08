@@ -174,7 +174,7 @@ func TestAddState(t *testing.T) {
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
 	}
-	err = test_instance.AddState(&models.State{EntityId: id, State: "69.69"})
+	err = test_instance.AddState("testidentifier", &models.State{EntityId: id, State: "69.69"})
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
 	}
@@ -302,13 +302,13 @@ func TestAllowService(t *testing.T) {
 	var identifier = randSeq(10)
 	var domain = fmt.Sprintf("%s.domain", identifier)
 	var entity = &models.Entity{
-		IdentityId: identifier,
-		EntityId: "test.entity",
-		Name: "Test Entity",
-		IsDevice: true,
-		AllowRules: true,
-		HasAttribute: false,
-		Attribute: "",
+		IdentityId:      identifier,
+		EntityId:        "test.entity",
+		Name:            "Test Entity",
+		IsDevice:        true,
+		AllowRules:      true,
+		HasAttribute:    false,
+		Attribute:       "",
 		IsVictronSensor: false,
 		HasNumericState: false,
 	}
@@ -345,7 +345,7 @@ func TestAllowService(t *testing.T) {
 	t.Run("Create HassService", func(t *testing.T) {
 		err := test_instance.AddHassService(&models.HassService{
 			Domain: domain,
-			Name: "Zufälliger Service",
+			Name:   "Zufälliger Service",
 		}, identifier)
 		if err != nil {
 			t.Errorf("FAILED: got error %s", err.Error())
@@ -374,7 +374,221 @@ func TestAllowService(t *testing.T) {
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
 	}
-	
+
+	t.Run("Clean", func(t *testing.T) {
+		err := test_instance.DeleteIdentity(identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+	})
+}
+
+func TestAllowSensor(t *testing.T) {
+	var identifier = randSeq(10)
+	var entity = &models.Entity{
+		IdentityId:      identifier,
+		EntityId:        "test.entity",
+		Name:            "Test Entity",
+		IsDevice:        true,
+		AllowRules:      true,
+		HasAttribute:    false,
+		Attribute:       "",
+		IsVictronSensor: false,
+		HasNumericState: false,
+	}
+
+	var sensor = &models.Entity{
+		IdentityId:      identifier,
+		EntityId:        "test.sensor",
+		Name:            "Test Sensor",
+		IsDevice:        true,
+		AllowRules:      true,
+		HasAttribute:    false,
+		Attribute:       "",
+		IsVictronSensor: false,
+		HasNumericState: false,
+	}
+
+	// setup
+	t.Run("Create Identity", func(t *testing.T) {
+		err := test_instance.AddIdentity(&models.Identity{Id: identifier, Name: "Zufällige Identität"})
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		exists, err := test_instance.ExistIdentity(identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		if !exists {
+			t.Error("Identity does not exist, should exist")
+		}
+	})
+
+	t.Run("Create Entity", func(t *testing.T) {
+		err := test_instance.AddEntity(entity)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		exists, err := test_instance.ExistEntity(identifier, entity.EntityId)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		if !exists {
+			t.Error("Entity does not exist, should exist")
+		}
+	})
+
+	t.Run("Create Entity", func(t *testing.T) {
+		err := test_instance.AddEntity(sensor)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		exists, err := test_instance.ExistEntity(identifier, sensor.EntityId)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		if !exists {
+			t.Error("Entity does not exist, should exist")
+		}
+	})
+
+	err := test_instance.AllowSensor(identifier, sensor.EntityId, entity.EntityId)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+	allowed, err := test_instance.IsSensorAllowed(identifier, sensor.EntityId, entity.EntityId)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+	if !allowed {
+		t.Errorf("Hass Serivce %s is not allowed for %s in %s", sensor.EntityId, entity.EntityId, identifier)
+	}
+	err = test_instance.DisallowSensor(identifier, sensor.EntityId, entity.EntityId)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+
+	t.Run("Clean", func(t *testing.T) {
+		err := test_instance.DeleteIdentity(identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+	})
+}
+
+func TestConditions(t *testing.T) {
+	var identifier = randSeq(10)
+
+	var sensor_a = &models.Entity{
+		IdentityId:      identifier,
+		EntityId:        "test.sensor",
+		Name:            "Test Sensor",
+		IsDevice:        false,
+		AllowRules:      false,
+		HasAttribute:    false,
+		Attribute:       "",
+		IsVictronSensor: true,
+		HasNumericState: true,
+	}
+
+	var sensor_b = &models.Entity{
+		IdentityId:      identifier,
+		EntityId:        "test.sensor2",
+		Name:            "Test Sensor2",
+		IsDevice:        false,
+		AllowRules:      false,
+		HasAttribute:    false,
+		Attribute:       "",
+		IsVictronSensor: false,
+		HasNumericState: false,
+	}
+
+	t.Run("Create Identity", func(t *testing.T) {
+		err := test_instance.AddIdentity(&models.Identity{Id: identifier, Name: "Zufällige Identität"})
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		exists, err := test_instance.ExistIdentity(identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		if !exists {
+			t.Error("Identity does not exist, should exist")
+		}
+	})
+
+	t.Run("Create Entity", func(t *testing.T) {
+		err := test_instance.AddEntity(sensor_a)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		exists, err := test_instance.ExistEntity(identifier, sensor_a.EntityId)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		if !exists {
+			t.Error("Entity does not exist, should exist")
+		}
+	})
+
+	t.Run("Create Entity", func(t *testing.T) {
+		err := test_instance.AddEntity(sensor_b)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		exists, err := test_instance.ExistEntity(identifier, sensor_b.EntityId)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		if !exists {
+			t.Error("Entity does not exist, should exist")
+		}
+	})
+
+	t.Run("AddConditions", func(t *testing.T) {
+		condition := &models.Condition{
+			Type: models.AND,
+			SubConditions: []*models.Condition{
+				{
+					Type: models.NUMERICSTATE,
+					Sensor: sensor_a,
+					Above: &models.ConditionValue{
+						Valid: true,
+						Value: 10,
+					},
+				},
+				{
+					Type: models.STATE,
+					Sensor: sensor_b,
+					ComparisonState: "on",
+				},
+				{
+					Type: models.TIME,
+					After: "10:00",
+					Before: "11:00",
+				},
+			},	
+		}
+		id, err := test_instance.AddCondition(identifier, condition)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+
+		exists, err := test_instance.ExistCondition(id, identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+
+		if !exists {
+			t.Error("[FAILED] Expected that Condition Exists")
+		}
+
+		_, err = test_instance.GetCondition(id, identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+
+	})
 
 	t.Run("Clean", func(t *testing.T) {
 		err := test_instance.DeleteIdentity(identifier)

@@ -8,11 +8,11 @@ import (
 	"github.com/JonasBordewick/honua-database/models"
 )
 
-func (hdb *HonuaDatabase) AddState(state *models.State) error {
-	const query = "INSERT INTO states (entity_id, state) VALUES ($1, $2);"
+func (hdb *HonuaDatabase) AddState(identity string, state *models.State) error {
+	const query = "INSERT INTO states (entity_id, identity, state) VALUES ($1, $2, $3);"
 	hdb.mutex.Lock()
 	defer hdb.mutex.Unlock()
-	_, err := hdb.db.Exec(query, state.EntityId, state.State)
+	_, err := hdb.db.Exec(query, state.EntityId, identity, state.State)
 	if err != nil {
 		log.Printf("An error occured during adding a new state to table states: %s\n", err.Error())
 	}
@@ -89,9 +89,10 @@ func (hdb *HonuaDatabase) GetNumberOfStatesOfEntity(entityID int) (int, error) {
 func (hdb *HonuaDatabase) make_state(rows *sql.Rows) (*models.State, error) {
 	var id int
 	var entityID int
+	var identity string
 	var state string
 	var recordTime *time.Time
-	err := rows.Scan(&id, &entityID, &state, &recordTime)
+	err := rows.Scan(&id, &entityID, &identity, &state, &recordTime)
 	if err != nil {
 		return nil, err
 	}

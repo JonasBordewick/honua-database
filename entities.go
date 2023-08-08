@@ -8,6 +8,62 @@ import (
 	"github.com/JonasBordewick/honua-database/models"
 )
 
+// Make sure that before calling this method, you have already been locked. This method does not lock
+func (hdb *HonuaDatabase) get_entity_id(identifier string) (int, error) {
+	query := "SELECT CASE WHEN EXISTS ( SELECT * FROM entities WHERE identity = $1) THEN true ELSE false END"
+
+	rows, err := hdb.db.Query(query, identifier)
+	if err != nil {
+		log.Printf("An error occured during getting id of entity in %s: %s\n", identifier, err.Error())
+		return -1, err
+	}
+
+	var exist_identity bool = false
+
+	for rows.Next() {
+		err = rows.Scan(&exist_identity)
+		if err != nil {
+			rows.Close()
+			log.Printf("An error occured during getting id of entity in %s: %s\n", identifier, err.Error())
+			return -1, err
+		}
+	}
+
+	rows.Close()
+
+	if !exist_identity {
+		return 0, nil
+	}
+
+	query = "SELECT MAX(id) FROM entities WHERE identity = $1;"
+
+	rows, err = hdb.db.Query(query, identifier)
+	if err != nil {
+		log.Printf("An error occured during getting id of entity in %s: %s\n", identifier, err.Error())
+		return -1, err
+	}
+
+	var id int = -1
+
+	for rows.Next() {
+		err = rows.Scan(&id)
+		if err != nil {
+			rows.Close()
+			log.Printf("An error occured during getting id of entity in %s: %s\n", identifier, err.Error())
+			return -1, err
+		}
+	}
+	rows.Close()
+
+	if id == -1 {
+		return -1, errors.New("something went wrong during getting id of entity")
+	}
+
+	id = id + 1
+
+	return id, nil
+}
+
 func (hdb *HonuaDatabase) GetEntity(id int) (*models.Entity, error) {
 	const query = "SELECT * FROM entities WHERE id=$1;"
 	hdb.mutex.Lock()
@@ -40,10 +96,10 @@ func (hdb *HonuaDatabase) GetEntity(id int) (*models.Entity, error) {
 func (hdb *HonuaDatabase) AddEntity(entity *models.Entity) error {
 	const query = `
 INSERT INTO entities(
-	identity, entity_id, name,
+	id, identity, entity_id, name,
 	is_device, allow_rules, has_attribute,
 	attribute, is_victron_sensor, has_numeric_state
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
 `
 
 	hdb.mutex.Lock()
@@ -54,7 +110,15 @@ INSERT INTO entities(
 		String: entity.Attribute,
 	}
 
-	_, err := hdb.db.Exec(query, entity.IdentityId, entity.EntityId, entity.Name, entity.IsDevice, entity.AllowRules, entity.HasAttribute, attributeString, entity.IsVictronSensor, entity.HasNumericState)
+	id, err := hdb.get_entity_id(entity.IdentityId)
+	if err != nil {
+		log.Printf("An error occured during adding a new entitiy to table entities: %s\n", err.Error())
+		return err
+	}
+
+	log.Printf("ID %d\n", id)
+
+	_, err = hdb.db.Exec(query, id, entity.IdentityId, entity.EntityId, entity.Name, entity.IsDevice, entity.AllowRules, entity.HasAttribute, attributeString, entity.IsVictronSensor, entity.HasNumericState)
 
 	if err != nil {
 		log.Printf("An error occured during adding a new entitiy to table entities: %s\n", err.Error())

@@ -32,11 +32,11 @@ func (hdb *HonuaDatabase) AllowSensor(identity, deviceId, sensorId string) error
 		return err
 	}
 
-	const query = "INSERT INTO allowed_sensors(deviceId, sensorId) VALUES ($1, $2);"
+	const query = "INSERT INTO allowed_sensors(identity, device_id, sensor_id) VALUES ($1, $2, $3);"
 	hdb.mutex.Lock()
 	defer hdb.mutex.Unlock()
 
-	_, err = hdb.db.Exec(query, dId, sId)
+	_, err = hdb.db.Exec(query, identity, dId, sId)
 
 	if err != nil {
 		log.Printf("An error occured during allowing the sensor %s for %s: %s\n", deviceId, sensorId, err.Error())
@@ -64,11 +64,11 @@ func (hdb *HonuaDatabase) DisallowSensor(identity, deviceId, sensorId string) er
 		return err
 	}
 	
-	const query = "DELETE FROM allowed_sensors WHERE device_id=$1 AND sensor_id=$2;"
+	const query = "DELETE FROM allowed_sensors WHERE identity=$1 AND device_id=$2 AND sensor_id=$3;"
 	hdb.mutex.Lock()
 	defer hdb.mutex.Unlock()
 
-	_, err = hdb.db.Exec(query, dId, sId)
+	_, err = hdb.db.Exec(query, identity, dId, sId)
 
 	if err != nil {
 		log.Printf("An error occured during deleting from allowed_sensors: %s\n", err.Error())
@@ -103,12 +103,12 @@ func (hdb *HonuaDatabase) IsSensorAllowed(identity, deviceId, sensorId string) (
 		return false, err
 	}
 
-	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM allowed_sensors WHERE device_id = $1 AND sensor_id = $2) THEN true ELSE false END"
+	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM allowed_sensors WHERE identity=$1 AND device_id = $2 AND sensor_id = $3) THEN true ELSE false END"
 
 	hdb.mutex.Lock()
 	defer hdb.mutex.Unlock()
 
-	rows, err := hdb.db.Query(query, dId, sId)
+	rows, err := hdb.db.Query(query, identity, dId, sId)
 	if err != nil {
 		log.Printf("An error occured during checking if the sensor %s is allowed for %s in %s: %s\n", sensorId, deviceId, identity, err.Error())
 		return false, err

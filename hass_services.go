@@ -2,23 +2,86 @@ package honuadatabase
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 
 	"github.com/JonasBordewick/honua-database/models"
 )
 
+// Make sure that before calling this method, you have already been locked. This method does not lock
+func (hdb *HonuaDatabase) get_hass_service_id(identifier string) (int, error) {
+	query := "SELECT CASE WHEN EXISTS ( SELECT * FROM hass_services WHERE identity = $1) THEN true ELSE false END"
+
+	rows, err := hdb.db.Query(query, identifier)
+	if err != nil {
+		log.Printf("An error occured during getting id of serivce in %s: %s\n", identifier, err.Error())
+		return -1, err
+	}
+
+	var exist_identity bool = false
+
+	for rows.Next() {
+		err = rows.Scan(&exist_identity)
+		if err != nil {
+			rows.Close()
+			log.Printf("An error occured during getting id of service in %s: %s\n", identifier, err.Error())
+			return -1, err
+		}
+	}
+
+	rows.Close()
+
+	if !exist_identity {
+		return 0, nil
+	}
+
+	query = "SELECT MAX(id) FROM hass_services WHERE identity = $1;"
+
+	rows, err = hdb.db.Query(query, identifier)
+	if err != nil {
+		log.Printf("An error occured during getting id of service in %s: %s\n", identifier, err.Error())
+		return -1, err
+	}
+
+	var id int = -1
+
+	for rows.Next() {
+		err = rows.Scan(&id)
+		if err != nil {
+			rows.Close()
+			log.Printf("An error occured during getting id of serivce in %s: %s\n", identifier, err.Error())
+			return -1, err
+		}
+	}
+	rows.Close()
+
+	if id == -1 {
+		return -1, errors.New("something went wrong during getting id of service")
+	}
+
+	id = id + 1
+
+	return id, nil
+}
+
 func (hdb *HonuaDatabase) AddHassService(service *models.HassService, identity string) error {
 	const query = `
 INSERT INTO hass_services(
-	identity, domain, name
-) VALUES ($1, $2, $3);
+	id, identity, domain, name
+) VALUES ($1, $2, $3, $4);
 `
 
 	hdb.mutex.Lock()
 	defer hdb.mutex.Unlock()
 
-	_, err := hdb.db.Exec(query, identity, service.Domain, service.Name)
+	id, err := hdb.get_entity_id(identity)
+	if err != nil {
+		log.Printf("An error occured during adding a new service to table hass_services: %s\n", err.Error())
+		return err
+	}
+
+	_, err = hdb.db.Exec(query, id, identity, service.Domain, service.Name)
 
 	if err != nil {
 		log.Printf("An error occured during adding a new Homeassistant Service to table hass_services: %s\n", err.Error())

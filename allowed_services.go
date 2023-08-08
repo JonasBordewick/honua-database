@@ -32,11 +32,11 @@ func (hdb *HonuaDatabase) AllowService(identity, domain, entityId string) error 
 		return err
 	}
 
-	const query = "INSERT INTO allowed_services(entity_id, service_id) VALUES ($1, $2)"
+	const query = "INSERT INTO allowed_services(identity, entity_id, service_id) VALUES ($1, $2, $3)"
 	hdb.mutex.Lock()
 	defer hdb.mutex.Unlock()
 
-	_, err = hdb.db.Exec(query, eId, sId)
+	_, err = hdb.db.Exec(query, identity, eId, sId)
 
 	if err != nil {
 		log.Printf("An error occured during adding a new Homeassistant Service to table hass_services: %s\n", err.Error())
@@ -64,11 +64,11 @@ func (hdb *HonuaDatabase) DisallowService(identity, domain, entityId string) err
 		return err
 	}
 	
-	const query = "DELETE FROM allowed_services WHERE entity_id=$1 AND service_id=$2;"
+	const query = "DELETE FROM allowed_services WHERE identity=$1 AND entity_id=$2 AND service_id=$3;"
 	hdb.mutex.Lock()
 	defer hdb.mutex.Unlock()
 
-	_, err = hdb.db.Exec(query, eId, sId)
+	_, err = hdb.db.Exec(query, identity, eId, sId)
 
 	if err != nil {
 		log.Printf("An error occured during deleting a Homeassistant Service from table hass_services: %s\n", err.Error())
@@ -103,12 +103,12 @@ func (hdb *HonuaDatabase) IsServiceAllowed(identity, domain, entityId string) (b
 		return false, err
 	}
 
-	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM allowed_services WHERE entity_id = $1 AND service_id = $2) THEN true ELSE false END"
+	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM allowed_services WHERE identity = $1 aND entity_id = $2 AND service_id = $3) THEN true ELSE false END"
 
 	hdb.mutex.Lock()
 	defer hdb.mutex.Unlock()
 
-	rows, err := hdb.db.Query(query, eId, sId)
+	rows, err := hdb.db.Query(query, identity, eId, sId)
 	if err != nil {
 		log.Printf("An error occured during checking if the service %s is allowed for %s in %s: %s\n", domain, entityId, identity, err.Error())
 		return false, err

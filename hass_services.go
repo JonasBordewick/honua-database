@@ -117,7 +117,7 @@ func (hdb *HonuaDatabase) GetIDofHassService(identity, domain string) (int, erro
 }
 
 func (hdb *HonuaDatabase) GetHassService(identity string, id int) (*models.HassService, error) {
-	const query = "SELECT domain, name, enabled FROM services WHERE identity=$1 AND id=$2;"
+	const query = "SELECT domain, name, enabled FROM hass_services WHERE identity=$1 AND id=$2;"
 	rows, err := hdb.db.Query(query, identity, id)
 	if err != nil {
 		log.Printf("An error occured during getting service %d of %s: %s\n", id, identity, err.Error())

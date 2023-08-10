@@ -63,7 +63,7 @@ func (hdb *HonuaDatabase) GetDelay(identifier string, delayID int) (*models.Dela
 }
 
 func (hdb *HonuaDatabase) AddDelay(identity string, delay *models.Delay) (int, error) {
-	const query = "INSERT INTO delays(id, identity, hours, minutes, secods) VALUES ($1, $2, $3, $4, $5);"
+	const query = "INSERT INTO delays(id, identity, hours, minutes, seconds) VALUES ($1, $2, $3, $4, $5);"
 	id, err := hdb.get_delay_id(identity)
 	if err != nil {
 		log.Printf("An error occured during adding a new delay: %s\n", err.Error())

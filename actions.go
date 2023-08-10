@@ -11,7 +11,7 @@ import (
 
 
 func (hdb *HonuaDatabase) GetActionsOfRule(identifier string, ruleID int) ([]*models.Action, []*models.Action, error) {
-	const query = "SELECT * FROM actions WHERE identifier=$1 AND rule_id=$2;"
+	const query = "SELECT * FROM actions WHERE identity=$1 AND rule_id=$2;"
 
 
 	rows, err := hdb.db.Query(query, identifier, ruleID)
@@ -103,7 +103,7 @@ func (hdb *HonuaDatabase) AddAction(identifier string, ruleID int, isThenAction 
 			return err
 		}
 		query := "INSERT INTO actions(id, identity, type, rule_id, is_then_action, delay_id) VALUES ($1, $2, $3, $4, $5, $6)"
-		_, err  = hdb.db.Exec(query, id, identifier, action.Type, ruleID, delayID)
+		_, err  = hdb.db.Exec(query, id, identifier, action.Type, ruleID, isThenAction, delayID)
 		if err != nil {
 			log.Printf("An error occured during adding a new action: %s\n", err.Error())
 			return err
@@ -116,7 +116,7 @@ func (hdb *HonuaDatabase) AddAction(identifier string, ruleID int, isThenAction 
 			return err
 		}
 		query := "INSERT INTO actions(id, identity, type, rule_id, is_then_action, service_id) VALUES ($1, $2, $3, $4, $5, $6)"
-		_, err  = hdb.db.Exec(query, id, identifier, action.Type, ruleID, serviceID)
+		_, err  = hdb.db.Exec(query, id, identifier, action.Type, ruleID, isThenAction, serviceID)
 		if err != nil {
 			log.Printf("An error occured during adding a new action: %s\n", err.Error())
 			return err
@@ -135,13 +135,6 @@ func (hdb *HonuaDatabase) DeleteAction(identifier string, id int) error {
 		return err
 	}
 
-	const query = "DELETE FROM actions WHERE id=$1 AND identity=$2;"
-	_, err = hdb.db.Exec(query, id, identifier)
-	if err != nil {
-		log.Printf("An error occured during deleting the action %d in %s: %s\n", id, identifier, err.Error())
-		return err
-	}
-
 	if aType == models.DELAY {
 		dId, err := hdb.get_delay_id_of_action(identifier, id)
 		if err != nil {
@@ -155,6 +148,14 @@ func (hdb *HonuaDatabase) DeleteAction(identifier string, id int) error {
 			return err
 		}
 	}
+
+	const query = "DELETE FROM actions WHERE id=$1 AND identity=$2;"
+	_, err = hdb.db.Exec(query, id, identifier)
+	if err != nil {
+		log.Printf("An error occured during deleting the action %d in %s: %s\n", id, identifier, err.Error())
+		return err
+	}
+
 
 	return nil
 

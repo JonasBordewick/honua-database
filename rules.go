@@ -180,6 +180,31 @@ func (hdb *HonuaDatabase) ExistRule(identity string, id int) (bool, error) {
 	return state, nil
 }
 
+func (hdb *HonuaDatabase) ExistRules(identity string) (bool, error) {
+	query := "SELECT CASE WHEN EXISTS ( SELECT * FROM rules WHERE identity = $1) THEN true ELSE false END"
+
+	rows, err := hdb.db.Query(query, identity)
+	if err != nil {
+		log.Printf("An error occured during getting id of rule in %s: %s\n", identity, err.Error())
+		return false, err
+	}
+
+	var exist_identity bool = false
+
+	for rows.Next() {
+		err = rows.Scan(&exist_identity)
+		if err != nil {
+			rows.Close()
+			log.Printf("An error occured during getting id of rule in %s: %s\n", identity, err.Error())
+			return false, err
+		}
+	}
+
+	rows.Close()
+
+	return exist_identity, nil
+}
+
 func (hdb *HonuaDatabase) get_condition_id_of_rule(identifier string, id int) (int, error) {
 	const query = "SELECT condition_id FROM rules WHERE id=$1 AND identity=$2;"
 	rows, err := hdb.db.Query(query, id, identifier)

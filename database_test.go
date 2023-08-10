@@ -145,6 +145,35 @@ func TestGetEntitiesWhereRulesAllowed(t *testing.T) {
 	}
 }
 
+func TestEditEntity2(t *testing.T) {
+	tmp := test_vs_entity
+	tmp.AllowRules = true
+	err := test_instance.EditEntity("testidentifier", test_vs_entity)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+}
+
+func TestGetEntitiesWhereRulesAllowed2(t *testing.T) {
+	entities, err := test_instance.GetEntitiesWhereRulesAreAllowed("testidentifier")
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+	if len(entities) != 1 {
+		t.Errorf("FAILED: got entities length %d want 1", len(entities))
+	}
+}
+
+func TestGetEntitiesWithoutRule(t *testing.T) {
+	e, err := test_instance.GetEntitiesWithoutRule("testidentifier")
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+	if len(e) != 1 {
+		t.Errorf("FAILED: got entities length %d want 1", len(e))
+	}
+}
+
 func TestGetVictronEntities(t *testing.T) {
 	entities, err := test_instance.GetVictronEntities("testidentifier")
 	if err != nil {
@@ -227,7 +256,8 @@ func TestDeleteOldestState(t *testing.T) {
 func TestHassService(t *testing.T) {
 
 	var identifier = randSeq(10)
-	var domain = fmt.Sprintf("%s.domain", identifier)
+	var domain_1 = fmt.Sprintf("%s.domain", identifier)
+	var domain_2 = fmt.Sprintf("%s.domain2", identifier)
 
 	// setup
 	t.Run("Create Identity", func(t *testing.T) {
@@ -245,7 +275,7 @@ func TestHassService(t *testing.T) {
 	})
 
 	t.Run("Exist Hass Service Before Adding a Hass Service", func(t *testing.T) {
-		exist, err := test_instance.ExistsHassService(identifier, domain)
+		exist, err := test_instance.ExistsHassService(identifier, domain_1)
 		if err != nil {
 			t.Errorf("FAILED: got error %s", err.Error())
 		}
@@ -255,14 +285,21 @@ func TestHassService(t *testing.T) {
 	})
 
 	t.Run("Add hass Service", func(t *testing.T) {
-		err := test_instance.AddHassService(&models.HassService{Domain: domain, Name: "Zufällige Domain", Enabled: true}, identifier)
+		err := test_instance.AddHassService(&models.HassService{Domain: domain_1, Name: "Zufällige Domain", Enabled: true}, identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+	})
+
+	t.Run("Add hass Service", func(t *testing.T) {
+		err := test_instance.AddHassService(&models.HassService{Domain: domain_2, Name: "Zufällige Domain", Enabled: true}, identifier)
 		if err != nil {
 			t.Errorf("FAILED: got error %s", err.Error())
 		}
 	})
 
 	t.Run("Exist Hass Service After Adding", func(t *testing.T) {
-		exist, err := test_instance.ExistsHassService(identifier, domain)
+		exist, err := test_instance.ExistsHassService(identifier, domain_1)
 		if err != nil {
 			t.Errorf("FAILED: got error %s", err.Error())
 		}
@@ -272,21 +309,25 @@ func TestHassService(t *testing.T) {
 	})
 
 	t.Run("GetID", func(t *testing.T) {
-		_, err := test_instance.GetIDofHassService(identifier, domain)
+		id, err := test_instance.GetIDofHassService(identifier, domain_1)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		_, err = test_instance.GetHassService(identifier, id)
 		if err != nil {
 			t.Errorf("FAILED: got error %s", err.Error())
 		}
 	})
 
 	t.Run("ToggleService", func(t *testing.T) {
-		err := test_instance.ToggleHassService(identifier, domain)
+		err := test_instance.ToggleHassService(identifier, domain_1)
 		if err != nil {
 			t.Errorf("FAILED: got error %s", err.Error())
 		}
 	})
 
 	t.Run("DeleteService", func(t *testing.T) {
-		err := test_instance.DeleteHassService(identifier, domain)
+		err := test_instance.DeleteHassService(identifier, domain_1)
 		if err != nil {
 			t.Errorf("FAILED: got error %s", err.Error())
 		}
@@ -371,6 +412,15 @@ func TestAllowService(t *testing.T) {
 	if !allowed {
 		t.Errorf("Hass Serivce %s is not allowed for %s in %s", domain, entity.EntityId, identifier)
 	}
+	allowedServices, err := test_instance.GetAllowedHassServicesOfEntity(identifier, entity.EntityId)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+
+	if len(allowedServices) != 1 {
+		t.Errorf("FAILED: expected len 1 got %d",len(allowedServices))
+	}
+
 	err = test_instance.DisallowService(identifier, domain, entity.EntityId)
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
@@ -626,6 +676,213 @@ func TestConditions(t *testing.T) {
 			t.Errorf("FAILED: got error %s", err.Error())
 		}
 	})
+}
+
+func TestDelay(t *testing.T) {
+	var identifier = randSeq(10)
+
+	var delay = &models.Delay{
+		Hours: 1,
+		Minutes: 1,
+		Seconds: 1,
+	}
+
+	var delay_2 = &models.Delay{
+		Hours: 1,
+		Minutes: 1,
+		Seconds: 1,
+	}
+
+	t.Run("Create Identity", func(t *testing.T) {
+		err := test_instance.AddIdentity(&models.Identity{Id: identifier, Name: "Zufällige Identität"})
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		exists, err := test_instance.ExistIdentity(identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		if !exists {
+			t.Error("Identity does not exist, should exist")
+		}
+	})
+
+	
+
+	did, err := test_instance.AddDelay(identifier, delay)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+
+	did, err = test_instance.AddDelay(identifier, delay_2)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+	
+	exists, err := test_instance.ExistDelay(identifier, did)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+	if !exists {
+		t.Error("Identity does not exist, should exist")
+	}
+	d, err := test_instance.GetDelay(identifier, did)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+	d.Hours = 2
+	err = test_instance.EditDelay(identifier, d)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+	err = test_instance.DeleteDelay(identifier, did)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+
+	t.Run("Clean", func(t *testing.T) {
+		err := test_instance.DeleteIdentity(identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+	})
+}
+
+func TestRules(t *testing.T) {
+	var identifier = randSeq(10)
+	var service = &models.HassService{
+		Domain: fmt.Sprintf("%s.domain", identifier),
+		Name:   "Zufälliger Service",
+	}
+	var entity = &models.Entity{
+		IdentityId:      identifier,
+		EntityId:        "test.entity",
+		Name:            "Test Entity",
+		IsDevice:        true,
+		AllowRules:      true,
+		HasAttribute:    false,
+		Attribute:       "",
+		IsVictronSensor: false,
+		HasNumericState: false,
+	}
+	var delay = &models.Delay{
+		Hours: 1,
+		Minutes: 1,
+		Seconds: 1,
+	}
+
+	var rule = &models.Rule{
+		EventBasedEvaluation: true,
+		Target: entity,
+		Condition: &models.Condition{
+			Type: models.NAND,
+			SubConditions: []*models.Condition{
+				{
+					Type: models.TIME,
+					After: "10:00",
+					Before: "11:00",
+				},
+			},
+		},
+		ThenActions: []*models.Action{
+			{
+				Type: models.SERVICE,
+				Service: service.Domain,
+			},
+		},
+		ElseActions: []*models.Action{
+			{
+				Type: models.DELAY,
+				Delay: delay,
+			},
+		},
+	}
+
+	t.Run("Create Identity", func(t *testing.T) {
+		err := test_instance.AddIdentity(&models.Identity{Id: identifier, Name: "Zufällige Identität"})
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		exists, err := test_instance.ExistIdentity(identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		if !exists {
+			t.Error("Identity does not exist, should exist")
+		}
+	})
+
+	t.Run("Create Entity", func(t *testing.T) {
+		err := test_instance.AddEntity(entity)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		exists, err := test_instance.ExistEntity(identifier, entity.EntityId)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		if !exists {
+			t.Error("Entity does not exist, should exist")
+		}
+	})
+
+	t.Run("Create HassService", func(t *testing.T) {
+		err := test_instance.AddHassService(service, identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		exists, err := test_instance.ExistsHassService(identifier, service.Domain)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+		if !exists {
+			t.Error("Hass Serivce does not exist, should exist")
+		}
+	})
+
+	err := test_instance.AddRule(identifier, rule)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+
+	err = test_instance.DeleteAction(identifier, 0)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+
+	err = test_instance.DeleteAction(identifier, 1)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+
+	_, err = test_instance.GetEntitiesWithoutRule(identifier)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+
+	_, err = test_instance.GetAllRulesOfIdentity(identifier)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+
+	_, err = test_instance.ExistRule(identifier, 0)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+
+	rule.Condition.SubConditions[0].Before = "12:00"
+	err = test_instance.EditRule(identifier, rule)
+	if err != nil {
+		t.Errorf("FAILED: got error %s", err.Error())
+	}
+
+	t.Run("Clean", func(t *testing.T) {
+		err := test_instance.DeleteIdentity(identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+	})
+
 }
 
 func TestClean(t *testing.T) {

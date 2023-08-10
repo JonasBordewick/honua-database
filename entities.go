@@ -258,8 +258,42 @@ func (hdb *HonuaDatabase) GetEntitiesWhereRulesAreAllowed(identifier string) ([]
 
 }
 
-func (hdb *HonuaDatabase) GetEntitiesWithoutAnyRule() ([]*models.Entity, error) {
-	return nil, errors.New("not implemented yet")
+func (hdb *HonuaDatabase) GetEntitiesWithoutRule(identifier string) ([]*models.Entity, error) {
+
+	existRules, err := hdb.ExistRules(identifier)
+	if err != nil {
+		log.Printf("An error occured during getting all entities without rule of identity = %s: %s\n", identifier, err.Error())
+		return nil, err
+	}
+	if !existRules {
+		entities, err := hdb.GetEntities(identifier)
+		if err != nil {
+			log.Printf("An error occured during getting all entities without rule of identity = %s: %s\n", identifier, err.Error())
+			return nil, err
+		}
+		return entities, nil
+	}
+	const query = "SELECT * FROM entities WHERE identity=$1 AND id NOT IN (SELECT entity_id FROM rules WHERE identity=$1);"
+	rows, err := hdb.db.Query(query, identifier)
+	if err != nil {
+		log.Printf("An error occured during getting all entities without rule of identity = %s: %s\n", identifier, err.Error())
+		return nil, err
+	}
+	var result []*models.Entity = []*models.Entity{}
+
+	for rows.Next() {
+		entity, err := hdb.make_entity(rows)
+		if err != nil {
+			rows.Close()
+			log.Printf("An error occured during getting all entities of identity = %s: %s\n", identifier, err.Error())
+			return nil, err
+		}
+		result = append(result, entity)
+	}
+
+	rows.Close()
+
+	return result, nil
 }
 
 func (hdb *HonuaDatabase) GetVictronEntities(identifier string) ([]*models.Entity, error) {

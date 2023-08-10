@@ -709,16 +709,16 @@ func TestDelay(t *testing.T) {
 
 	
 
-	did, err := test_instance.AddDelay(identifier, delay)
+	_, err := test_instance.AddDelay(identifier, delay)
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
 	}
 
-	did, err = test_instance.AddDelay(identifier, delay_2)
+	did, err := test_instance.AddDelay(identifier, delay_2)
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
 	}
-	
+
 	exists, err := test_instance.ExistDelay(identifier, did)
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
@@ -890,6 +890,62 @@ func TestClean(t *testing.T) {
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
 	}
+}
+
+func TestConfig(t *testing.T) {
+	var identifier = randSeq(10)
+
+	var config = &models.Config{
+		Widgets: []*models.Widget{
+			{
+				Contents: map[string]string{
+					"type": "x",
+					"entity_id": "5",
+					"allow_rule": "true",
+				},
+			},
+			{
+				Contents: map[string]string{
+					"type": "x",
+					"entity_id": "5",
+					"allow_rule": "true",
+				},
+			},
+		},
+	}
+
+	err := test_instance.AddIdentity(&models.Identity{Id: identifier, Name: "Zufall"})
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	err = test_instance.AddConfig(identifier, config)
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	c, err := test_instance.GetConfig(identifier)
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	c.Widgets[0].Contents["type"] = "XY"
+
+	err = test_instance.EditConfig(identifier, c)
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	err = test_instance.DeleteConfig(identifier)
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	err = test_instance.DeleteIdentity(identifier)
+	if err != nil {
+		t.Error(err.Error())
+	}
+
 }
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")

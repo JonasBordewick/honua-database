@@ -9,12 +9,6 @@ import (
 	"github.com/JonasBordewick/honua-database/models"
 )
 
-/*
-	TODO
-	EditCondition(condition)
-	DeleteCondition(id)
-*/
-
 const add_condition_query = `
 INSERT INTO conditions(
 	id, identity, type, sensor_id, before,
@@ -28,7 +22,7 @@ func (hdb *HonuaDatabase) get_condition_id(identifier string) (int, error) {
 
 	rows, err := hdb.db.Query(query, identifier)
 	if err != nil {
-		log.Printf("An error occured during getting id of entity in %s: %s\n", identifier, err.Error())
+		log.Printf("An error occured during getting id of condition in %s: %s\n", identifier, err.Error())
 		return -1, err
 	}
 
@@ -38,7 +32,7 @@ func (hdb *HonuaDatabase) get_condition_id(identifier string) (int, error) {
 		err = rows.Scan(&exist_identity)
 		if err != nil {
 			rows.Close()
-			log.Printf("An error occured during getting id of entity in %s: %s\n", identifier, err.Error())
+			log.Printf("An error occured during getting id of enconditiontity in %s: %s\n", identifier, err.Error())
 			return -1, err
 		}
 	}
@@ -53,7 +47,7 @@ func (hdb *HonuaDatabase) get_condition_id(identifier string) (int, error) {
 
 	rows, err = hdb.db.Query(query, identifier)
 	if err != nil {
-		log.Printf("An error occured during getting id of entity in %s: %s\n", identifier, err.Error())
+		log.Printf("An error occured during getting id of condition in %s: %s\n", identifier, err.Error())
 		return -1, err
 	}
 
@@ -63,14 +57,14 @@ func (hdb *HonuaDatabase) get_condition_id(identifier string) (int, error) {
 		err = rows.Scan(&id)
 		if err != nil {
 			rows.Close()
-			log.Printf("An error occured during getting id of entity in %s: %s\n", identifier, err.Error())
+			log.Printf("An error occured during getting id of condition in %s: %s\n", identifier, err.Error())
 			return -1, err
 		}
 	}
 	rows.Close()
 
 	if id == -1 {
-		return -1, errors.New("something went wrong during getting id of entity")
+		return -1, errors.New("something went wrong during getting id of condition")
 	}
 
 	id = id + 1
@@ -82,7 +76,7 @@ func (hdb *HonuaDatabase) AddCondition(identity string, condition *models.Condit
 
 	id, err := hdb.get_condition_id(identity)
 	if err != nil {
-		log.Printf("An error occured during adding a new entitiy to table entities: %s\n", err.Error())
+		log.Printf("An error occured during adding a new condition: %s\n", err.Error())
 		return -1, err
 	}
 
@@ -154,6 +148,115 @@ func (hdb *HonuaDatabase) add_subcondition(identity string, condition *models.Co
 	return fmt.Errorf("error during adding new condition to table: ConditionType %d not supported", condition.Type)
 }
 
+func (hdb *HonuaDatabase) DeleteCondition(conditionID int, identity string) error {
+	const query = "DELETE FROM conditions WHERE id=$1 AND identity=$2;"
+
+	_, err := hdb.db.Exec(query, conditionID, identity)
+	if err != nil {
+		log.Printf("An error occured during deleting the condition with id = %d of identity %s: %s\n", conditionID, identity, err.Error())
+	}
+	return err
+}
+
+func (hdb *HonuaDatabase) EditCondition(identity string, condition *models.Condition) error {
+	exist, err := hdb.ExistCondition(condition.Id, identity)
+
+	if err != nil {
+		log.Printf("An error occured during editity condition: %s\n", err.Error())
+		return err
+	}
+
+	if !exist {
+		log.Println("This Condition does not exist")
+		return fmt.Errorf("the Condition with a id %d does not exist in %s", condition.Id, identity)
+	}
+
+	if condition.Type < models.NUMERICSTATE {
+		hasParent, err := hdb.has_no_parent(condition.Id, identity)
+		if err != nil {
+			log.Printf("An error occured during editity condition: %s\n", err.Error())
+			return err
+		}
+		if !hasParent {
+			log.Printf("This Condition (%d, %s) has a parent, the condition type of %d is not valid.\n", condition.Id, identity, condition.Type)
+			return fmt.Errorf("this Condition (%d, %s) has a parent, the condition type of %d is not valid", condition.Id, identity, condition.Type)
+		}
+		query := "UPDATE conditions SET type=$1 WHERE id=$2 AND identity=$3"
+
+		_, err = hdb.db.Exec(query, condition.Type, condition.Id, identity)
+		if err != nil {
+			log.Printf("An error occured during editity condition: %s\n", err.Error())
+			return err
+		}
+
+		for _, c := range condition.SubConditions {
+			err = hdb.EditCondition(identity, c)
+			if err != nil {
+				log.Printf("An error occured during editity condition: %s\n", err.Error())
+				return err
+			}
+		}
+
+		return nil
+		
+	} else {
+		hasParent, err := hdb.has_no_parent(condition.Id, identity)
+		if err != nil {
+			log.Printf("An error occured during editity condition: %s\n", err.Error())
+			return err
+		}
+		if hasParent {
+			log.Printf("This Condition (%d, %s) hasn't a parent, the condition type of %d is not valid.\n", condition.Id, identity, condition.Type)
+			return fmt.Errorf("this Condition (%d, %s) hasn't a parent, the condition type of %d is not valid", condition.Id, identity, condition.Type)
+		}
+
+		if condition.Type == models.NUMERICSTATE {
+			query := "UPDATE conditions SET type=$1, sensor_id=$2, below=$3, above=$4 WHERE id=$5 AND identity=$6"
+			var below sql.NullInt32 = sql.NullInt32{}
+			var above sql.NullInt32 = sql.NullInt32{}
+
+			if condition.Below != nil {
+				below = sql.NullInt32{Valid: condition.Below.Valid, Int32: int32(condition.Below.Value)}
+			}
+
+			if condition.Above != nil {
+				above = sql.NullInt32{Valid: condition.Above.Valid, Int32: int32(condition.Above.Value)}
+			}
+			_, err = hdb.db.Exec(query, condition.Type, condition.Sensor.Id, below, above, condition.Id, identity)
+			if err != nil {
+				log.Printf("An error occured during editity condition: %s\n", err.Error())
+			}
+			return err
+		} else if condition.Type == models.STATE {
+			query := "UPDATE conditions SET type=$1, sensor_id=$2, comparison_state=$3 WHERE id=$4 AND identity=$5"
+			_, err = hdb.db.Exec(query, condition.Type, condition.Sensor.Id, condition.ComparisonState, condition.Id, identity)
+			if err != nil {
+				log.Printf("An error occured during editity condition: %s\n", err.Error())
+			}
+			return err
+		} else if condition.Type == models.TIME {
+			var before sql.NullString = sql.NullString{
+				Valid:  len(condition.Before) > 0,
+				String: condition.Before,
+			}
+
+			var after sql.NullString = sql.NullString{
+				Valid:  len(condition.After) > 0,
+				String: condition.After,
+			}
+
+			query := "UPDATE conditions SET type=$1, after=$2, before=$3 WHERE id=$4 AND identity=$5"
+
+			_, err := hdb.db.Exec(query, condition.Type, after, before, condition.Id, identity)
+			if err != nil {
+				log.Printf("An error occured during editity condition: %s\n", err.Error())
+			}
+			return err
+		}
+		return fmt.Errorf("the condition type %d is not supported", condition.Type)
+	}
+}
+
 func (hdb *HonuaDatabase) ExistCondition(conditionID int, identity string) (bool, error) {
 	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM conditions WHERE identity=$1 AND id = $2) THEN true ELSE false END"
 
@@ -193,7 +296,7 @@ func (hdb *HonuaDatabase) GetCondition(conditionID int, identity string) (*model
 	}
 
 	const query = "SELECT * FROM conditions WHERE identity =$1 AND id=$2;"
-	
+
 	rows, err := hdb.db.Query(query, identity, conditionID)
 	if err != nil {
 		log.Printf("An error occured during getting the condition with id %d: %s\n", conditionID, err.Error())
@@ -220,7 +323,6 @@ func (hdb *HonuaDatabase) GetCondition(conditionID int, identity string) (*model
 
 func (hdb *HonuaDatabase) get_subconditions(parentID int) ([]*models.Condition, error) {
 	const query = "SELECT * FROM conditions WHERE parent_id=$1;"
-	
 
 	rows, err := hdb.db.Query(query, parentID)
 	if err != nil {
@@ -244,6 +346,29 @@ func (hdb *HonuaDatabase) get_subconditions(parentID int) ([]*models.Condition, 
 	rows.Close()
 
 	return result, nil
+}
+
+func (hdb HonuaDatabase) has_no_parent(conditionID int, identity string) (bool, error) {
+	const query = "SELECT parent_id FROM conditions WHERE identity = $1 AND id = $2"
+	rows, err := hdb.db.Query(query, identity, conditionID)
+	if err != nil {
+		log.Printf("An error occured during checking if the codntion %d has a parent in %s: %s\n", conditionID, identity, err.Error())
+		return false, err
+	}
+
+	var state bool = false
+	for rows.Next() {
+		var pid sql.NullInt32
+		err = rows.Scan(&pid)
+		if err != nil {
+			rows.Close()
+			log.Printf("An error occured during checking if the codntion %d has a parent in %s: %s\n", conditionID, identity, err.Error())
+			return false, err
+		}
+		state = !pid.Valid
+	}
+
+	return state, nil
 }
 
 func (hdb *HonuaDatabase) make_condition(rows *sql.Rows) (*models.Condition, error) {
@@ -280,7 +405,7 @@ func (hdb *HonuaDatabase) make_condition(rows *sql.Rows) (*models.Condition, err
 			return nil, errors.New("numeric_state condition is not valid")
 		}
 
-		sensor, err := hdb.GetEntity(int(sensorID.Int32))
+		sensor, err := hdb.GetEntity(identity, int(sensorID.Int32))
 		if err != nil {
 			return nil, err
 		}
@@ -298,7 +423,7 @@ func (hdb *HonuaDatabase) make_condition(rows *sql.Rows) (*models.Condition, err
 			return nil, errors.New("state condition is not valid")
 		}
 
-		sensor, err := hdb.GetEntity(int(sensorID.Int32))
+		sensor, err := hdb.GetEntity(identity, int(sensorID.Int32))
 		if err != nil {
 			return nil, err
 		}

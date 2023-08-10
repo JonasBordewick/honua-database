@@ -37,13 +37,29 @@ type Rule struct {
 	Id                   int
 	Enabled              bool
 	EventBasedEvaluation bool
-	PeriodicTrigger      int
+	PeriodicTrigger      PeriodicTriggerType
 	Name                 string
-	Target               Entity
+	Target               *Entity
 	Condition            *Condition
-	ThenActions          *[]Action
-	ElseActions          *[]Action
+	ThenActions          []*Action
+	ElseActions          []*Action
 }
+
+type PeriodicTriggerType int
+
+const (
+	OneMin PeriodicTriggerType = iota
+	TwoMin
+	FiveMin
+	TenMin
+	FifteenMin
+	TwentyMin
+	TwentyFiveMin
+	FortyFiveMin
+	OneH
+	TwoH
+	SixH
+)
 
 type Condition struct {
 	Id              int
@@ -74,13 +90,29 @@ type ConditionValue struct {
 	Value int
 }
 
+type ActionType int
+
+const (
+	SERVICE ActionType = iota
+	DELAY
+)
+
 type Action struct {
 	Id      int
+	Type    ActionType
 	Service string
+	Delay   *Delay
 }
 
 type Service struct {
 	Domain      string
 	Name        string
 	Description string
+}
+
+type Delay struct {
+	Id      int
+	Hours   int32
+	Minutes int32
+	Seconds int32
 }

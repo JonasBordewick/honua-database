@@ -64,10 +64,10 @@ func (hdb *HonuaDatabase) get_entity_id(identifier string) (int, error) {
 	return id, nil
 }
 
-func (hdb *HonuaDatabase) GetEntity(id int) (*models.Entity, error) {
-	const query = "SELECT * FROM entities WHERE id=$1;"
+func (hdb *HonuaDatabase) GetEntity(identity string, id int) (*models.Entity, error) {
+	const query = "SELECT * FROM entities WHERE id=$1 AND identity=$2;"
 
-	rows, err := hdb.db.Query(query, id)
+	rows, err := hdb.db.Query(query, id, identity)
 	if err != nil {
 		log.Printf("An error occured during getting entity: %s\n", err.Error())
 		return nil, err

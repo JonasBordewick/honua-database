@@ -2,6 +2,7 @@ package honuadatabase
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"testing"
 	"time"
@@ -583,10 +584,39 @@ func TestConditions(t *testing.T) {
 			t.Error("[FAILED] Expected that Condition Exists")
 		}
 
-		_, err = test_instance.GetCondition(id, identifier)
+		c, err := test_instance.GetCondition(id, identifier)
 		if err != nil {
 			t.Errorf("FAILED: got error %s", err.Error())
 		}
+
+		c.Type = models.NAND
+		c.SubConditions[0].Above.Value = 12
+		c.SubConditions[1].ComparisonState = "off"
+		c.SubConditions[2].After = "10:30"
+
+		err = test_instance.EditCondition(identifier, c)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+
+		c, err = test_instance.GetCondition(id, identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+
+		log.Printf("%d | %d | %s | %s\n", condition.Type, condition.SubConditions[0].Above.Value, condition.SubConditions[1].ComparisonState, condition.SubConditions[2].After)
+
+		log.Printf("%d | %d | %s | %s\n", c.Type, c.SubConditions[0].Above.Value, c.SubConditions[1].ComparisonState, c.SubConditions[2].After)
+
+		if c.Type != models.NAND || c.SubConditions[0].Above.Value != 12 || c.SubConditions[1].ComparisonState != "off" || c.SubConditions[2].After != "10:30" {
+			t.Error("FAILED: edit condition failed")
+		}
+
+		err = test_instance.DeleteCondition(id, identifier)
+		if err != nil {
+			t.Errorf("FAILED: got error %s", err.Error())
+		}
+
 
 	})
 

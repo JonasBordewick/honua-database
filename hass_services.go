@@ -73,7 +73,7 @@ INSERT INTO hass_services(
 `
 
 
-	id, err := hdb.get_entity_id(identity)
+	id, err := hdb.get_hass_service_id(identity)
 	if err != nil {
 		log.Printf("An error occured during adding a new service to table hass_services: %s\n", err.Error())
 		return err
@@ -114,6 +114,29 @@ func (hdb *HonuaDatabase) GetIDofHassService(identity, domain string) (int, erro
 	}
 
 	return id, nil
+}
+
+func (hdb *HonuaDatabase) GetHassService(identity string, id int) (*models.HassService, error) {
+	const query = "SELECT domain, name, enabled FROM services WHERE identity=$1 AND id=$2;"
+	rows, err := hdb.db.Query(query, identity, id)
+	if err != nil {
+		log.Printf("An error occured during getting service %d of %s: %s\n", id, identity, err.Error())
+		return nil, err
+	}
+	var result *models.HassService
+
+	for rows.Next() {
+		result, err = hdb.make_hass_service(rows)
+		if err != nil {
+			rows.Close()
+			log.Printf("An error occured during getting service %d of %s: %s\n", id, identity, err.Error())
+			return nil, err
+		}
+	}
+
+	rows.Close()
+
+	return result, nil
 }
 
 func (hdb *HonuaDatabase) ToggleHassService(identity, domain string) error {

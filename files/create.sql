@@ -97,14 +97,27 @@ CREATE TABLE IF NOT EXISTS rules (
     is_enabled BOOLEAN NOT NULL DEFAULT false
 );
 
+CREATE TABLE IF NOT EXISTS delays (
+    id INTEGER NOT NULL,
+    identity TEXT NOT NULL,
+    CONSTRAINT fk_identity FOREIGN KEY(identity) REFERENCES identities(identifier) ON DELETE CASCADE,
+    PRIMARY KEY(id, identity),
+    hours INTEGER NOT NULL,
+    minutes INTEGER NOT NULL,
+    seconds INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS actions (
     id INTEGER NOT NULL,
     identity TEXT NOT NULL,
     CONSTRAINT fk_identity FOREIGN KEY(identity) REFERENCES identities(identifier) ON DELETE CASCADE,
     PRIMARY KEY(id, identity),
+    type INTEGER NOT NULL,
     rule_id INTEGER NOT NULL,
     CONSTRAINT fk_rule_id FOREIGN KEY(identity, rule_id) REFERENCES rules(identity, id) ON DELETE CASCADE,
     is_then_action BOOLEAN NOT NULL DEFAULT true,
-    service_id INTEGER NOT NULL,
-    CONSTRAINT fk_service_id FOREIGN KEY(identity, service_id) REFERENCES hass_services(identity, id) ON DELETE CASCADE
+    service_id INTEGER,
+    CONSTRAINT fk_service_id FOREIGN KEY(identity, service_id) REFERENCES hass_services(identity, id) ON DELETE CASCADE,
+    delay_id INTEGER,
+    CONSTRAINT fk_delay_id FOREIGN KEY(identity, delay_id) REFERENCES delays(identity, id) ON DELETE CASCADE
 );

@@ -48,3 +48,25 @@ func (hdb *HonuaDatabase) GetConfig(identity string) (*models.Config, error) {
 		Widgets: widgets,
 	}, nil
 }
+
+func (hdb *HonuaDatabase) ExistConfig(identity string) (bool, error) {
+	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM configs WHERE identity = $1) THEN true ELSE false END;"
+	rows, err := hdb.db.Query(query, identity)
+	if err != nil {
+		return false, err
+	}
+
+	var state bool = false
+
+	for rows.Next() {
+		err = rows.Scan(&state)
+		if err != nil {
+			rows.Close()
+			return false, err
+		}
+	}
+
+	rows.Close()
+
+	return state, nil
+}

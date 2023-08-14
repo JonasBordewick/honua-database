@@ -17,8 +17,8 @@ func (hdb *HonuaDatabase) AddState(identity string, state *models.State) error {
 	return err
 }
 
-func (hdb *HonuaDatabase) GetState(entityID int) (*models.State, error) {
-	const query = "SELECT * FROM states WHERE id = (SELECT MAX(id) FROM states WHERE entity_id = $1);"
+func (hdb *HonuaDatabase) GetState(identity string, entityID int) (*models.State, error) {
+	const query = "SELECT * FROM states WHERE id = (SELECT MAX(id) FROM states WHERE identity = $1 AND entity_id = $2);"
 
 
 	rows, err := hdb.db.Query(query, entityID)

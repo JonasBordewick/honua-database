@@ -34,6 +34,26 @@ CREATE TABLE IF NOT EXISTS states (
     record_time TIMESTAMPTZ DEFAULT timezone('Europe/Berlin', now()) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS configs (
+    id SERIAL PRIMARY KEY,
+    identity TEXT NOT NULL UNIQUE,
+    CONSTRAINT fk_identity FOREIGN KEY(identity) REFERENCES identities(identifier) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS widgets (
+    id SERIAL PRIMARY KEY,
+    config_id INTEGER NOT NULL,
+    CONSTRAINT fk_config_id FOREIGN KEY(config_id) REFERENCES configs(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS contents (
+    id SERIAL PRIMARY KEY,
+    widget_id INTEGER NOT NULL,
+    CONSTRAINT fk_widget_id FOREIGN KEY(widget_id) REFERENCES widgets(id) ON DELETE CASCADE,
+    content_key TEXT NOT NULL,
+    content_value TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS hass_services (
     id INTEGER NOT NULL,
     identity TEXT NOT NULL,

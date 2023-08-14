@@ -215,7 +215,7 @@ func TestGetState(t *testing.T) {
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
 	}
-	state, err := test_instance.GetState(id)
+	state, err := test_instance.GetState("testidentifier", id)
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
 	}

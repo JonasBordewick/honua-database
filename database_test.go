@@ -84,16 +84,6 @@ func TestAddEntitiyBeforeAddingIdentity(t *testing.T) {
 	}
 }
 
-func TestExistEntityBeforeAdding(t *testing.T) {
-	exist, err := test_instance.ExistEntity("testidentifier", "test.test")
-	if err != nil {
-		t.Errorf("FAILED: got error %s", err.Error())
-	}
-	if exist {
-		t.Error("FAILED: Entity exists, it should not be exist")
-	}
-}
-
 func TestAddEntity(t *testing.T) {
 	err := test_instance.AddIdentity(&models.Identity{Id: "testidentifier", Name: "Test"})
 	if err != nil {
@@ -102,13 +92,6 @@ func TestAddEntity(t *testing.T) {
 	err = test_instance.AddEntity(test_vs_entity)
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
-	}
-	exist, err := test_instance.ExistEntity("testidentifier", "test.test")
-	if err != nil {
-		t.Errorf("FAILED: got error %s", err.Error())
-	}
-	if !exist {
-		t.Error("FAILED: Entity does not exist but it should be there")
 	}
 }
 
@@ -375,13 +358,6 @@ func TestAllowService(t *testing.T) {
 		if err != nil {
 			t.Errorf("FAILED: got error %s", err.Error())
 		}
-		exists, err := test_instance.ExistEntity(identifier, entity.EntityId)
-		if err != nil {
-			t.Errorf("FAILED: got error %s", err.Error())
-		}
-		if !exists {
-			t.Error("Entity does not exist, should exist")
-		}
 	})
 
 	t.Run("Create HassService", func(t *testing.T) {
@@ -480,26 +456,12 @@ func TestAllowSensor(t *testing.T) {
 		if err != nil {
 			t.Errorf("FAILED: got error %s", err.Error())
 		}
-		exists, err := test_instance.ExistEntity(identifier, entity.EntityId)
-		if err != nil {
-			t.Errorf("FAILED: got error %s", err.Error())
-		}
-		if !exists {
-			t.Error("Entity does not exist, should exist")
-		}
 	})
 
 	t.Run("Create Entity", func(t *testing.T) {
 		err := test_instance.AddEntity(sensor)
 		if err != nil {
 			t.Errorf("FAILED: got error %s", err.Error())
-		}
-		exists, err := test_instance.ExistEntity(identifier, sensor.EntityId)
-		if err != nil {
-			t.Errorf("FAILED: got error %s", err.Error())
-		}
-		if !exists {
-			t.Error("Entity does not exist, should exist")
 		}
 	})
 
@@ -573,26 +535,12 @@ func TestConditions(t *testing.T) {
 		if err != nil {
 			t.Errorf("FAILED: got error %s", err.Error())
 		}
-		exists, err := test_instance.ExistEntity(identifier, sensor_a.EntityId)
-		if err != nil {
-			t.Errorf("FAILED: got error %s", err.Error())
-		}
-		if !exists {
-			t.Error("Entity does not exist, should exist")
-		}
 	})
 
 	t.Run("Create Entity", func(t *testing.T) {
 		err := test_instance.AddEntity(sensor_b)
 		if err != nil {
 			t.Errorf("FAILED: got error %s", err.Error())
-		}
-		exists, err := test_instance.ExistEntity(identifier, sensor_b.EntityId)
-		if err != nil {
-			t.Errorf("FAILED: got error %s", err.Error())
-		}
-		if !exists {
-			t.Error("Entity does not exist, should exist")
 		}
 	})
 
@@ -816,13 +764,6 @@ func TestRules(t *testing.T) {
 		err := test_instance.AddEntity(entity)
 		if err != nil {
 			t.Errorf("FAILED: got error %s", err.Error())
-		}
-		exists, err := test_instance.ExistEntity(identifier, entity.EntityId)
-		if err != nil {
-			t.Errorf("FAILED: got error %s", err.Error())
-		}
-		if !exists {
-			t.Error("Entity does not exist, should exist")
 		}
 	})
 

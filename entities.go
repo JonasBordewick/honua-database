@@ -154,12 +154,12 @@ WHERE identity = $8 AND entity_id = $9;
 }
 
 // Checkt, ob eine Entität existiert die einen bestimmten Identifier und eine EntityID hat
-func (hdb *HonuaDatabase) ExistEntity(identifier, entityId string) (bool, error) {
-	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM entities WHERE identity = $1 AND entity_id = $2) THEN true ELSE false END"
+func (hdb *HonuaDatabase) ExistEntity(identifier string, id int) (bool, error) {
+	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM entities WHERE identity = $1 AND id = $2) THEN true ELSE false END"
 
-	rows, err := hdb.db.Query(query, identifier, entityId)
+	rows, err := hdb.db.Query(query, identifier, id)
 	if err != nil {
-		log.Printf("An error occured during checking if the entity %s exists in %s: %s\n", identifier, entityId, err.Error())
+		log.Printf("An error occured during checking if the entity %s exists in %s: %s\n", identifier, id, err.Error())
 		return false, err
 	}
 
@@ -169,7 +169,7 @@ func (hdb *HonuaDatabase) ExistEntity(identifier, entityId string) (bool, error)
 		err = rows.Scan(&state)
 		if err != nil {
 			rows.Close()
-			log.Printf("An error occured during checking if the entity %s exists in %s: %s\n", identifier, entityId, err.Error())
+			log.Printf("An error occured during checking if the entity %s exists in %s: %s\n", identifier, id, err.Error())
 			return false, err
 		}
 	}

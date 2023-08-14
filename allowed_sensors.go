@@ -6,22 +6,6 @@ import (
 )
 
 func (hdb *HonuaDatabase) AllowSensor(identity, deviceId, sensorId string) error {
-	exists, err := hdb.ExistEntity(identity, deviceId)
-	if err != nil {
-		return err
-	}
-	if !exists {
-		return fmt.Errorf("the entity with identity %s and entityId %s does not exist", identity, deviceId)
-	}
-
-	exists, err = hdb.ExistEntity(identity, sensorId)
-	if err != nil {
-		return err
-	}
-	if !exists {
-		return fmt.Errorf("the entity with identity %s and entityId %s does not exist", identity, sensorId)
-	}
-
 	dId, err := hdb.GetIdOfEntity(identity, deviceId)
 	if err != nil {
 		return err
@@ -73,22 +57,6 @@ func (hdb *HonuaDatabase) DisallowSensor(identity, deviceId, sensorId string) er
 }
 
 func (hdb *HonuaDatabase) IsSensorAllowed(identity, deviceId, sensorId string) (bool, error) {
-	exists, err := hdb.ExistEntity(identity, deviceId)
-	if err != nil {
-		return false, err
-	}
-	if !exists {
-		return false, fmt.Errorf("the entity with identity %s and entityId %s does not exist", identity, deviceId)
-	}
-
-	exists, err = hdb.ExistEntity(identity, sensorId)
-	if err != nil {
-		return false, err
-	}
-	if !exists {
-		return false, fmt.Errorf("the entity with identity %s and entityId %s does not exist", identity, deviceId)
-	}
-
 	dId, err := hdb.GetIdOfEntity(identity, deviceId)
 	if err != nil {
 		return false, err

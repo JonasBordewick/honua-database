@@ -14,14 +14,6 @@ func (hdb *HonuaDatabase) AllowService(identity, domain, entityId string) error 
 		return fmt.Errorf("the homeassistant service with identity %s and domain %s does not exist", identity, domain)
 	}
 
-	exists, err = hdb.ExistEntity(identity, entityId)
-	if err != nil {
-		return err
-	}
-	if !exists {
-		return fmt.Errorf("the entity with identity %s and entityId %s does not exist", identity, entityId)
-	}
-
 	sId, err := hdb.GetIDofHassService(identity, domain)
 	if err != nil {
 		return err
@@ -79,14 +71,6 @@ func (hdb *HonuaDatabase) IsServiceAllowed(identity, domain, entityId string) (b
 	}
 	if !exists {
 		return false, fmt.Errorf("the homeassistant service with identity %s and domain %s does not exist", identity, domain)
-	}
-
-	exists, err = hdb.ExistEntity(identity, entityId)
-	if err != nil {
-		return false, err
-	}
-	if !exists {
-		return false, fmt.Errorf("the entity with identity %s and entityId %s does not exist", identity, entityId)
 	}
 
 	sId, err := hdb.GetIDofHassService(identity, domain)

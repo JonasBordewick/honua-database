@@ -21,7 +21,7 @@ func (hdb *HonuaDatabase) GetState(identity string, entityID int) (*models.State
 	const query = "SELECT * FROM states WHERE id = (SELECT MAX(id) FROM states WHERE identity = $1 AND entity_id = $2);"
 
 
-	rows, err := hdb.db.Query(query, entityID)
+	rows, err := hdb.db.Query(query, identity, entityID)
 	if err != nil {
 		log.Printf("An error occured during getting the latest state of entity with id = %d: %s\n", entityID, err.Error())
 		return nil, err

@@ -43,19 +43,19 @@ func (hdb *HonuaDatabase) GetState(identity string, entityID int) (*models.State
 	return state, nil
 }
 
-func (hdb *HonuaDatabase) DeleteOldestState(entityID int) error {
-	const query = "DELETE FROM states WHERE id = (SELECT MIN(id) FROM states WHERE entity_id = $1);"
-	_, err := hdb.db.Exec(query, entityID)
+func (hdb *HonuaDatabase) DeleteOldestState(identity string, entityID int) error {
+	const query = "DELETE FROM states WHERE id = (SELECT MIN(id) FROM states WHERE identity=$1 AND entity_id = $2);"
+	_, err := hdb.db.Exec(query, identity, entityID)
 	if err != nil {
 		log.Printf("An error occured during deleting the oldest state of enitity with id = %d: %s\n", entityID, err.Error())
 	}
 	return err
 }
 
-func (hdb *HonuaDatabase) GetNumberOfStatesOfEntity(entityID int) (int, error) {
-	const query = "SELECT COUNT(*) AS count FROM states WHERE entity_id = $1;"
+func (hdb *HonuaDatabase) GetNumberOfStatesOfEntity(identity string, entityID int) (int, error) {
+	const query = "SELECT COUNT(*) AS count FROM states WHERE identity=$1 AND entity_id = $2;"
 
-	rows, err := hdb.db.Query(query, entityID)
+	rows, err := hdb.db.Query(query, identity, entityID)
 	if err != nil {
 		log.Printf("An error occured during getting the number of states of entity with id = %d: %s\n", entityID, err.Error())
 		return -1, err

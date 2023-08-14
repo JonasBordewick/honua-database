@@ -229,7 +229,7 @@ func TestGetNumbersOfStates(t *testing.T) {
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
 	}
-	number, err := test_instance.GetNumberOfStatesOfEntity(id)
+	number, err := test_instance.GetNumberOfStatesOfEntity("testidentifier", id)
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
 	}
@@ -243,8 +243,8 @@ func TestDeleteOldestState(t *testing.T) {
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
 	}
-	test_instance.DeleteOldestState(id)
-	number, err := test_instance.GetNumberOfStatesOfEntity(id)
+	test_instance.DeleteOldestState("testidentifier", id)
+	number, err := test_instance.GetNumberOfStatesOfEntity("testidentifier", id)
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
 	}

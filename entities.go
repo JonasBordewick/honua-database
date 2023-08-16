@@ -159,7 +159,7 @@ func (hdb *HonuaDatabase) ExistEntity(identifier string, id int) (bool, error) {
 
 	rows, err := hdb.db.Query(query, identifier, id)
 	if err != nil {
-		log.Printf("An error occured during checking if the entity %s exists in %s: %s\n", identifier, id, err.Error())
+		log.Printf("An error occured during checking if the entity %d exists in %s: %s\n", id, identifier, err.Error())
 		return false, err
 	}
 
@@ -169,7 +169,7 @@ func (hdb *HonuaDatabase) ExistEntity(identifier string, id int) (bool, error) {
 		err = rows.Scan(&state)
 		if err != nil {
 			rows.Close()
-			log.Printf("An error occured during checking if the entity %s exists in %s: %s\n", identifier, id, err.Error())
+			log.Printf("An error occured during checking if the entity %d exists in %s: %s\n", id, identifier, err.Error())
 			return false, err
 		}
 	}
@@ -333,9 +333,10 @@ func (hdb *HonuaDatabase) make_entity(rows *sql.Rows) (*models.Entity, error) {
 	var attribute sql.NullString
 	var isVictronSensor bool
 	var hasNumericState bool
+	var rulesEnabled bool
 
 
-	err := rows.Scan(&id, &identity, &entityID, &name, &isDevice, &allowRules, &hasAttribute, &attribute, &isVictronSensor, &hasNumericState)
+	err := rows.Scan(&id, &identity, &entityID, &name, &isDevice, &allowRules, &hasAttribute, &attribute, &isVictronSensor, &hasNumericState, &rulesEnabled)
 	if err != nil {
 		return nil, err
 	}
@@ -351,6 +352,7 @@ func (hdb *HonuaDatabase) make_entity(rows *sql.Rows) (*models.Entity, error) {
 		HasAttribute: hasAttribute,
 		IsVictronSensor: isVictronSensor,
 		HasNumericState: hasNumericState,
+		RulesEnabled: rulesEnabled,
 	}
 
 	if hasAttribute && attribute.Valid {

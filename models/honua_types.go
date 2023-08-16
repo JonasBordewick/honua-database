@@ -20,6 +20,7 @@ type Entity struct {
 	Attribute       string
 	IsVictronSensor bool
 	HasNumericState bool
+	RulesEnabled    bool
 }
 
 func (e *Entity) Equals(o *Entity) bool {

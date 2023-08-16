@@ -70,3 +70,25 @@ func (hdb *HonuaDatabase) ExistConfig(identity string) (bool, error) {
 
 	return state, nil
 }
+
+func (hdb *HonuaDatabase) GetConfigID(identity string) (int, error) {
+	const query = "SELECT id FROM configs WHERE identity = $1;"
+	rows, err := hdb.db.Query(query, identity)
+	if err != nil {
+		return -1, err
+	}
+
+	var id int = -1
+
+	for rows.Next() {
+		err = rows.Scan(&id)
+		if err != nil {
+			rows.Close()
+			return -1, err
+		}
+	}
+
+	rows.Close()
+
+	return id, nil
+ }

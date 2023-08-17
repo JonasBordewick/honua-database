@@ -154,7 +154,33 @@ WHERE identity = $8 AND entity_id = $9;
 }
 
 // Checkt, ob eine Entität existiert die einen bestimmten Identifier und eine EntityID hat
-func (hdb *HonuaDatabase) ExistEntity(identifier string, id int) (bool, error) {
+func (hdb *HonuaDatabase) ExistEntity(identifier string, id int, hasAttribute bool, attribute string) (bool, error) {
+
+	if hasAttribute {
+		const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM entities WHERE identity = $1 AND id = $2 AND attribute = $3) THEN true ELSE false END"
+
+		rows, err := hdb.db.Query(query, identifier, id)
+		if err != nil {
+			log.Printf("An error occured during checking if the entity %d exists in %s: %s\n", id, identifier, err.Error())
+			return false, err
+		}
+
+		var state bool = false
+
+		for rows.Next() {
+			err = rows.Scan(&state)
+			if err != nil {
+				rows.Close()
+				log.Printf("An error occured during checking if the entity %d exists in %s: %s\n", id, identifier, err.Error())
+				return false, err
+			}
+		}
+
+		rows.Close()
+
+		return state, nil
+	}
+
 	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM entities WHERE identity = $1 AND id = $2) THEN true ELSE false END"
 
 	rows, err := hdb.db.Query(query, identifier, id)
@@ -206,7 +232,6 @@ func (hdb *HonuaDatabase) GetIdOfEntity(identifier, entityId string) (int, error
 
 func (hdb *HonuaDatabase) GetEntities(identifier string) ([]*models.Entity, error) {
 	const query = "SELECT * FROM entities WHERE identity = $1;"
-
 
 	rows, err := hdb.db.Query(query, identifier)
 	if err != nil {
@@ -335,24 +360,22 @@ func (hdb *HonuaDatabase) make_entity(rows *sql.Rows) (*models.Entity, error) {
 	var hasNumericState bool
 	var rulesEnabled bool
 
-
 	err := rows.Scan(&id, &identity, &entityID, &name, &isDevice, &allowRules, &hasAttribute, &attribute, &isVictronSensor, &hasNumericState, &rulesEnabled)
 	if err != nil {
 		return nil, err
 	}
 
-
 	var result *models.Entity = &models.Entity{
-		Id: id,
-		IdentityId: identity,
-		Name: name,
-		EntityId: entityID,
-		IsDevice: isDevice,
-		AllowRules: allowRules,
-		HasAttribute: hasAttribute,
+		Id:              id,
+		IdentityId:      identity,
+		Name:            name,
+		EntityId:        entityID,
+		IsDevice:        isDevice,
+		AllowRules:      allowRules,
+		HasAttribute:    hasAttribute,
 		IsVictronSensor: isVictronSensor,
 		HasNumericState: hasNumericState,
-		RulesEnabled: rulesEnabled,
+		RulesEnabled:    rulesEnabled,
 	}
 
 	if hasAttribute && attribute.Valid {

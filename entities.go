@@ -157,7 +157,7 @@ WHERE identity = $8 AND entity_id = $9;
 func (hdb *HonuaDatabase) ExistEntity(identifier string, id int, hasAttribute bool, attribute string) (bool, error) {
 
 	if hasAttribute {
-		const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM entities WHERE identity = $1 AND id = $2 AND attribute = $3) THEN true ELSE false END"
+		const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM entities WHERE identity = $1 AND id = $2 AND has_attribute AND attribute = $3) THEN true ELSE false END"
 
 		rows, err := hdb.db.Query(query, identifier, id, attribute)
 		if err != nil {
@@ -181,7 +181,7 @@ func (hdb *HonuaDatabase) ExistEntity(identifier string, id int, hasAttribute bo
 		return state, nil
 	}
 
-	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM entities WHERE identity = $1 AND id = $2) THEN true ELSE false END"
+	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM entities WHERE identity = $1 AND id = $2 AND NOT has_attribute) THEN true ELSE false END"
 
 	rows, err := hdb.db.Query(query, identifier, id)
 	if err != nil {

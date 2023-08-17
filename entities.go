@@ -159,7 +159,7 @@ func (hdb *HonuaDatabase) ExistEntity(identifier string, id int, hasAttribute bo
 	if hasAttribute {
 		const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM entities WHERE identity = $1 AND id = $2 AND attribute = $3) THEN true ELSE false END"
 
-		rows, err := hdb.db.Query(query, identifier, id)
+		rows, err := hdb.db.Query(query, identifier, id, attribute)
 		if err != nil {
 			log.Printf("An error occured during checking if the entity %d exists in %s: %s\n", id, identifier, err.Error())
 			return false, err

@@ -5,22 +5,22 @@ import (
 )
 
 type Identity struct {
-	Id   string
-	Name string
+	Id   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type Entity struct {
-	Id              int
-	IdentityId      string
-	EntityId        string
-	Name            string
-	IsDevice        bool
-	AllowRules      bool
-	HasAttribute    bool
-	Attribute       string
-	IsVictronSensor bool
-	HasNumericState bool
-	RulesEnabled    bool
+	Id              int    `json:"id"`
+	IdentityId      string `json:"identity"`
+	EntityId        string `json:"entity_id"`
+	Name            string `json:"name"`
+	IsDevice        bool   `json:"is_device"`
+	AllowRules      bool   `json:"allow_rules"`
+	HasAttribute    bool   `json:"has_attribute"`
+	Attribute       string `json:"attribute"`
+	IsVictronSensor bool   `json:"is_victron_sensor"`
+	HasNumericState bool   `json:"has_numeric_state"`
+	RulesEnabled    bool   `json:"rules_enabled"`
 }
 
 func (e *Entity) Equals(o *Entity) bool {

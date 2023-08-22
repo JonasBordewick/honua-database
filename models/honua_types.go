@@ -9,18 +9,31 @@ type Identity struct {
 	Name string `json:"name"`
 }
 
+type SensorType int32
+
+const (
+	NONE SensorType = iota
+	ACLOADS
+	TOTALPV
+	GRID
+	SOC
+	BATTERYVALUE
+	BATTERYSTATE
+)
+
 type Entity struct {
-	Id              int    `json:"id"`
-	IdentityId      string `json:"identity"`
-	EntityId        string `json:"entity_id"`
-	Name            string `json:"name"`
-	IsDevice        bool   `json:"is_device"`
-	AllowRules      bool   `json:"allow_rules"`
-	HasAttribute    bool   `json:"has_attribute"`
-	Attribute       string `json:"attribute"`
-	IsVictronSensor bool   `json:"is_victron_sensor"`
-	HasNumericState bool   `json:"has_numeric_state"`
-	RulesEnabled    bool   `json:"rules_enabled"`
+	Id              int        `json:"id"`
+	IdentityId      string     `json:"identity"`
+	EntityId        string     `json:"entity_id"`
+	Name            string     `json:"name"`
+	IsDevice        bool       `json:"is_device"`
+	AllowRules      bool       `json:"allow_rules"`
+	HasAttribute    bool       `json:"has_attribute"`
+	Attribute       string     `json:"attribute"`
+	IsVictronSensor bool       `json:"is_victron_sensor"`
+	SensorType      SensorType `json:"sensor_type"`
+	HasNumericState bool       `json:"has_numeric_state"`
+	RulesEnabled    bool       `json:"rules_enabled"`
 }
 
 func (e *Entity) Equals(o *Entity) bool {

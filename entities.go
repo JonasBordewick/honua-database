@@ -96,8 +96,8 @@ func (hdb *HonuaDatabase) AddEntity(entity *models.Entity) error {
 INSERT INTO entities(
 	id, identity, entity_id, name,
 	is_device, allow_rules, has_attribute,
-	attribute, is_victron_sensor, has_numeric_state
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
+	attribute, is_victron_sensor, sensor_type, has_numeric_state
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);
 `
 	var attributeString sql.NullString = sql.NullString{
 		Valid:  entity.Attribute != "",
@@ -112,7 +112,7 @@ INSERT INTO entities(
 
 	log.Printf("ID %d\n", id)
 
-	_, err = hdb.db.Exec(query, id, entity.IdentityId, entity.EntityId, entity.Name, entity.IsDevice, entity.AllowRules, entity.HasAttribute, attributeString, entity.IsVictronSensor, entity.HasNumericState)
+	_, err = hdb.db.Exec(query, id, entity.IdentityId, entity.EntityId, entity.Name, entity.IsDevice, entity.AllowRules, entity.HasAttribute, attributeString, entity.IsVictronSensor, entity.SensorType, entity.HasNumericState)
 
 	if err != nil {
 		log.Printf("An error occured during adding a new entitiy to table entities: %s\n", err.Error())
@@ -121,10 +121,10 @@ INSERT INTO entities(
 }
 
 // Löscht eine Enität mit der ID im Parameter
-func (hdb *HonuaDatabase) DeleteEntity(id int) error {
-	const query = "DELETE FROM entities WHERE id = $1;"
+func (hdb *HonuaDatabase) DeleteEntity(id int, identity string) error {
+	const query = "DELETE FROM entities WHERE identity=$1 AND id = $2;"
 
-	_, err := hdb.db.Exec(query, id)
+	_, err := hdb.db.Exec(query, identity, id)
 	if err != nil {
 		log.Printf("An error occured during deleting the entity with id = %d: %s\n", id, err.Error())
 	}
@@ -134,8 +134,8 @@ func (hdb *HonuaDatabase) DeleteEntity(id int) error {
 func (hdb *HonuaDatabase) EditEntity(identifier string, entity *models.Entity) error {
 	const query = `
 UPDATE entities
-SET name = $1, is_device = $2, allow_rules = $3, has_attribute = $4, attribute = $5, is_victron_sensor = $6, has_numeric_state = $7
-WHERE identity = $8 AND entity_id = $9;
+SET name = $1, is_device = $2, allow_rules = $3, has_attribute = $4, attribute = $5, is_victron_sensor = $6, sensor_type = $7, has_numeric_state = $8
+WHERE identity = $9 AND entity_id = $10;
 	`
 
 	var attributeString sql.NullString = sql.NullString{
@@ -145,7 +145,7 @@ WHERE identity = $8 AND entity_id = $9;
 
 	entity.HasAttribute = attributeString.Valid
 
-	_, err := hdb.db.Exec(query, entity.Name, entity.IsDevice, entity.AllowRules, entity.HasAttribute, attributeString, entity.IsVictronSensor, entity.HasNumericState, entity.IdentityId, entity.EntityId)
+	_, err := hdb.db.Exec(query, entity.Name, entity.IsDevice, entity.AllowRules, entity.HasAttribute, attributeString, entity.IsVictronSensor, entity.SensorType, entity.HasNumericState, entity.IdentityId, entity.EntityId)
 
 	if err != nil {
 		log.Printf("An error occured during editity entitiy: %s\n", err.Error())
@@ -357,10 +357,11 @@ func (hdb *HonuaDatabase) make_entity(rows *sql.Rows) (*models.Entity, error) {
 	var hasAttribute bool
 	var attribute sql.NullString
 	var isVictronSensor bool
+	var sensorType models.SensorType
 	var hasNumericState bool
 	var rulesEnabled bool
 
-	err := rows.Scan(&id, &identity, &entityID, &name, &isDevice, &allowRules, &hasAttribute, &attribute, &isVictronSensor, &hasNumericState, &rulesEnabled)
+	err := rows.Scan(&id, &identity, &entityID, &name, &isDevice, &allowRules, &hasAttribute, &attribute, &isVictronSensor, &hasNumericState, &rulesEnabled, &sensorType)
 	if err != nil {
 		return nil, err
 	}
@@ -374,6 +375,7 @@ func (hdb *HonuaDatabase) make_entity(rows *sql.Rows) (*models.Entity, error) {
 		AllowRules:      allowRules,
 		HasAttribute:    hasAttribute,
 		IsVictronSensor: isVictronSensor,
+		SensorType: sensorType,
 		HasNumericState: hasNumericState,
 		RulesEnabled:    rulesEnabled,
 	}

@@ -172,7 +172,7 @@ func TestDeleteEntity(t *testing.T) {
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
 	}
-	err = test_instance.DeleteEntity(id)
+	err = test_instance.DeleteEntity(id, "testidentifier")
 	if err != nil {
 		t.Errorf("FAILED: got error %s", err.Error())
 	}

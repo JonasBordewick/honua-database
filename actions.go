@@ -158,7 +158,30 @@ func (hdb *HonuaDatabase) DeleteAction(identifier string, id int) error {
 
 
 	return nil
+}
 
+func (hdb *HonuaDatabase) ExistAction(identifier string, id int) (bool, error) {
+	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM actions WHERE identity=$1 AND id = $2) THEN true ELSE false END"
+	rows, err := hdb.db.Query(query, identifier, id)
+	if err != nil {
+		log.Printf("An error occured during checking if the action with id %d exists: %s\n", id, err.Error())
+		return false, err
+	}
+
+	var state bool = false
+
+	for rows.Next() {
+		err = rows.Scan(&state)
+		if err != nil {
+			rows.Close()
+			log.Printf("An error occured during checking if the action with id %d exists: %s\n", id, err.Error())
+			return false, err
+		}
+	}
+
+	rows.Close()
+
+	return state, nil
 }
 
 func (hdb *HonuaDatabase) get_action_type(identifier string, id int) (models.ActionType, error) {
@@ -208,30 +231,6 @@ func (hdb *HonuaDatabase) get_delay_id_of_action(identifier string, id int) (int
 	}
 
 	return int(result.Int32), nil
-}
-
-func (hdb *HonuaDatabase) ExistAction(identifier string, id int) (bool, error) {
-	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM actions WHERE identity=$1 AND id = $2) THEN true ELSE false END"
-	rows, err := hdb.db.Query(query, identifier, id)
-	if err != nil {
-		log.Printf("An error occured during checking if the action with id %d exists: %s\n", id, err.Error())
-		return false, err
-	}
-
-	var state bool = false
-
-	for rows.Next() {
-		err = rows.Scan(&state)
-		if err != nil {
-			rows.Close()
-			log.Printf("An error occured during checking if the action with id %d exists: %s\n", id, err.Error())
-			return false, err
-		}
-	}
-
-	rows.Close()
-
-	return state, nil
 }
 
 func (hdb *HonuaDatabase) get_action_id(identifier string) (int, error) {

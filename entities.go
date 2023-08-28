@@ -280,7 +280,6 @@ func (hdb *HonuaDatabase) GetEntitiesWhereRulesAreAllowed(identifier string) ([]
 	rows.Close()
 
 	return result, nil
-
 }
 
 func (hdb *HonuaDatabase) GetEntitiesWithoutRule(identifier string) ([]*models.Entity, error) {
